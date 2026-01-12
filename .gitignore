@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+.python-version
+uv.lock
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.cursor/
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test_docs/
+
+# macOS
+.DS_Store
+
+# Project specific
+ingestion.log*
+GEMINI.md
+docs/IMPLEMENTATION_PLAN.md
+
+# Docs folder - ignore everything except key files
+docs/*
+!docs/plan.md
+!docs/RAG_ARCHITECTURE.md
+!docs/gemini rag 101 architecture image.png

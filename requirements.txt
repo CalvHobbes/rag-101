@@ -1,0 +1,14 @@
+pydantic-settings
+sqlalchemy[asyncio]
+psycopg[binary]
+pgvector
+langchain-community
+langchain-huggingface
+langchain-openai
+sentence-transformers
+pypdf
+python-dotenv
+tenacity
+structlog
+pytest
+greenlet # often needed for sqlalchemy async
