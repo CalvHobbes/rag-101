@@ -11,4 +11,5 @@ python-dotenv
 tenacity
 structlog
 pytest
+pytest-asyncio
 greenlet # often needed for sqlalchemy async

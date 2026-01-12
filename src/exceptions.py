@@ -33,3 +33,17 @@ class DatabaseConnectionError(StorageException):
 class ConfigurationError(Exception):
     """Raised when there is a configuration error."""
     pass
+
+
+"""
+Custom exception classes for the RAG query pipeline.
+"""
+class RetrievalException(Exception):
+    """Base exception for all retrieval-related errors."""
+    pass
+class QueryPreprocessingError(RetrievalException):
+    """Raised when query preprocessing fails."""
+    pass
+class SimilaritySearchError(RetrievalException):
+    """Raised when similarity search fails."""
+    pass
