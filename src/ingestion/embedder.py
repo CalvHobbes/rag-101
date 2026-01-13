@@ -12,7 +12,9 @@ def get_embedder() -> Embeddings:
     Factory to return the configured embedding model.
     Cached to avoid re-initializing heavy models.
     """
-    settings = get_settings().embedding
+    full_settings = get_settings()
+    settings = full_settings.embedding
+    timeout = full_settings.timeout.embedding_seconds
     
     try:
         if settings.provider == "huggingface":
@@ -29,7 +31,8 @@ def get_embedder() -> Embeddings:
             log.info("embedder_initialized", provider=settings.provider, model=settings.model)
             return OpenAIEmbeddings(
                 model=settings.model, 
-                api_key=settings.api_key
+                api_key=settings.api_key,
+                request_timeout=timeout
             )
             
         else:

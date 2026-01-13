@@ -7,6 +7,14 @@ from src.api.routers import query
 
 from src.logging_config import get_logger
 
+from src.exceptions import LLMError, SimilaritySearchError, StorageException, QueryPreprocessingError
+from src.api.exception_handlers import (
+    llm_error_handler,
+    retrieval_error_handler,
+    storage_error_handler,
+    query_preprocessing_error_handler,
+)
+
 log = get_logger(__name__)
 
 
@@ -25,8 +33,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(query.router)    
+app.include_router(query.router)        
 
+# Exception handlers
+app.add_exception_handler(LLMError, llm_error_handler)
+app.add_exception_handler(SimilaritySearchError, retrieval_error_handler)
+app.add_exception_handler(StorageException, storage_error_handler)
+app.add_exception_handler(QueryPreprocessingError, query_preprocessing_error_handler)
 
 @app.get("/health")
 async def health_check():

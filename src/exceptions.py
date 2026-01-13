@@ -30,10 +30,6 @@ class DatabaseConnectionError(StorageException):
     """Raised when database connection fails."""
     pass
 
-class ConfigurationError(Exception):
-    """Raised when there is a configuration error."""
-    pass
-
 
 """
 Custom exception classes for the RAG query pipeline.
@@ -46,4 +42,19 @@ class QueryPreprocessingError(RetrievalException):
     pass
 class SimilaritySearchError(RetrievalException):
     """Raised when similarity search fails."""
+    pass
+
+"""
+Custom exception classes for LLM usage.
+"""
+class LLMError(Exception):
+    """Base exception for LLM-related errors."""
+    pass
+
+class LLMRateLimitError(LLMError):
+    """LLM API rate limit exceeded."""
+    pass
+
+class LLMTimeoutError(LLMError):
+    """LLM API call timed out."""
     pass

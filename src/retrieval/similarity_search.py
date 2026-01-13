@@ -3,7 +3,7 @@ import time
 from typing import Optional, Any
 from sqlalchemy import text
 from src.db.db_manager import db_manager
-from src.exceptions import StorageException
+from src.exceptions import SimilaritySearchError
 from src.logging_config import get_logger
 from src.schemas.retrieval import RetrievalResult, RetrievalFilter
 
@@ -100,8 +100,8 @@ async def search_similar_chunks(
         
         return chunks
         
-    except StorageException:
+    except SimilaritySearchError:
         raise
     except Exception as e:
         log.error("similarity_search_failed", error=str(e))
-        raise StorageException(f"Similarity search failed: {e}")
+        raise SimilaritySearchError(f"Similarity search failed: {e}")

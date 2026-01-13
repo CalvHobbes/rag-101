@@ -11,26 +11,30 @@ def get_llm() -> BaseChatModel:
     Factory that returns the configured LLM (Chat Model).
     Supports: OpenAI, Google Gemini.
     """
-    settings = get_settings().llm
+    settings = get_settings()
+    llm_context = settings.llm
+    timeout = settings.timeout.llm_seconds
     
     try:
-        if settings.provider == LLMProvider.OPENAI:
+        if llm_context.provider == LLMProvider.OPENAI:
             from langchain_openai import ChatOpenAI
-            log.info("llm_initialized", provider=settings.provider.value, model=settings.model)
+            log.info("llm_initialized", provider=llm_context.provider.value, model=llm_context.model)
             return ChatOpenAI(
-                model=settings.model,
-                api_key=settings.api_key,
-                temperature=0
+                model=llm_context.model,
+                api_key=llm_context.api_key,
+                temperature=0,
+                request_timeout=timeout
             )
             
-        elif settings.provider == LLMProvider.GEMINI:
+        elif llm_context.provider == LLMProvider.GEMINI:
             from langchain_google_genai import ChatGoogleGenerativeAI
-            log.info("llm_initialized", provider=settings.provider.value, model=settings.model)
+            log.info("llm_initialized", provider=llm_context.provider.value, model=llm_context.model)
             return ChatGoogleGenerativeAI(
-                model=settings.model,
-                google_api_key=settings.api_key,
+                model=llm_context.model,
+                google_api_key=llm_context.api_key,
                 temperature=0,
-                convert_system_message_to_human=True
+                convert_system_message_to_human=True,
+                timeout=timeout
             )
             
         else:

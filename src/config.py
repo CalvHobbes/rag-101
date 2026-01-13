@@ -10,6 +10,19 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+class TimeoutSettings(BaseSettings):
+    """Timeout configuration for external services."""
+    
+    model_config = SettingsConfigDict(
+        env_prefix="TIMEOUT__",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+    
+    llm_seconds: float = 60.0       # LLM API timeout
+    embedding_seconds: float = 30.0  # Embedding API timeout
+    db_seconds: float = 10.0         # Database query timeout
 
 class EmbeddingSettings(BaseSettings):
     """Swappable embedding provider configuration."""
@@ -85,6 +98,7 @@ class Settings(BaseSettings):
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     opik: OpikSettings = Field(default_factory=OpikSettings)
+    timeout: TimeoutSettings = Field(default_factory=TimeoutSettings)
 
 
 @lru_cache

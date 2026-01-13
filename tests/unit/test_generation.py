@@ -155,7 +155,8 @@ def test_get_llm_openai(mock_settings):
         ChatOpenAI.assert_called_once_with(
             model="gpt-4o", 
             api_key="sk-test",
-            temperature=0
+            temperature=0,
+            request_timeout=mock_settings.return_value.timeout.llm_seconds
         )
 
 @patch("src.generation.llm_factory.get_settings")

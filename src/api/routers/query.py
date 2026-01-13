@@ -23,10 +23,5 @@ async def query(request: GenerateRequest) -> GenerateResponse:
     - **filter**: Optional metadata filters
     """
     log.info("query_endpoint_called", query=request.query)
-    
-    try:
-        response = await generate_answer(request)
-        return response
-    except Exception as e:
-        log.error("query_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+    response = await generate_answer(request)
+    return response

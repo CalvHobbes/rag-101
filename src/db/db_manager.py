@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.sql import text
 from src.config import get_settings
 from src.models.base import Base
+from src.exceptions import DatabaseConnectionError
 # Import models so they are registered with Base metadata
 from src.models.chunk import Chunk
 from src.models.source_document import SourceDocument
@@ -14,11 +15,15 @@ class DatabaseManager:
         # Ensure we use the async driver
         url = self.settings.database_url.replace("postgresql://", "postgresql+psycopg://")
         
+        timeout_ms = int(self.settings.timeout.db_seconds * 1000)
         self.engine = create_async_engine(
             url,
             echo=False,
             pool_size=5,
-            max_overflow=10
+            max_overflow=10,
+            connect_args={
+                "options": f"-c statement_timeout={timeout_ms}"
+            }
         )
         self.session_factory = async_sessionmaker(
             bind=self.engine,
@@ -28,11 +33,14 @@ class DatabaseManager:
 
     async def init_db(self):
         """Initialize database: create extension and tables."""
-        async with self.engine.begin() as conn:
-            # 1. Enable pgvector extension
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            # 2. Create all tables defined in Base
-            await conn.run_sync(Base.metadata.create_all)
+        try:
+            async with self.engine.begin() as conn:
+                # 1. Enable pgvector extension
+                await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+                # 2. Create all tables defined in Base
+                await conn.run_sync(Base.metadata.create_all)
+        except Exception as e:
+            raise DatabaseConnectionError(f"Failed to initialize database: {e}") from e
 
     @contextlib.asynccontextmanager
     async def get_session(self) -> AsyncIterator[AsyncSession]:
