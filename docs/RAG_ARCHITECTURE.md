@@ -173,8 +173,12 @@ Extract text while preserving structural metadata (page numbers, source).
 
 **Framework / Classes:**
 - LangChain loaders:
-  - `PyPDFLoader`
+  - `PyMuPDFLoader` (fitz) - **Selected for PDF**
   - `TextLoader`
+
+**Why PyMuPDFLoader?**
+- **vs PyPDFLoader (pypdf):** PyMuPDF correctly handles complex kerning and layout-preserving spacing where `pypdf` often inserts incorrect spaces (e.g., "P r e - C h u n k").
+- **vs Docling:** While `Docling` is powerful for deep layout analysis, it is significantly heavier (~70x slower in our benchmarks) and adds complex dependencies. `PyMuPDF` provides the sweet spot of speed (<1s/file) and text extraction accuracy for standard RAG ingestion.
 
 **Output:**
 - `Document` objects with:

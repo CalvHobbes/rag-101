@@ -60,3 +60,6 @@ docs/*
 !docs/plan.md
 !docs/RAG_ARCHITECTURE.md
 !docs/gemini rag 101 architecture image.png
+
+# Debug scripts
+debug_scripts/

@@ -6,9 +6,13 @@ from src.retrieval.similarity_search import search_similar_chunks
 from src.schemas.retrieval import RetrievalResponse, RetrievalFilter
 from src.logging_config import get_logger
 from src.retrieval.reranker import rerank_results
+import opik
+from src.config import get_settings
+
 log = get_logger(__name__)
 
 
+@opik.track(name="retrieve")
 async def retrieve(
     query: str,
     top_k: int = 5,

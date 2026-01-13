@@ -1,5 +1,5 @@
 from typing import List
-from langchain_community.document_loaders import PyPDFLoader, TextLoader
+from langchain_community.document_loaders import TextLoader, PyMuPDFLoader
 from langchain_core.documents import Document
 from src.ingestion.file_discovery import FileInfo
 from src.exceptions import DocumentLoadError
@@ -41,7 +41,7 @@ def _load_pdf_document(file_info: FileInfo) -> List[Document]:
     Each page of the PDF becomes a separate Document.
     """
     try:
-        loader = PyPDFLoader(str(file_info.file_path))
+        loader = PyMuPDFLoader(str(file_info.file_path))
         documents = loader.load()
         return documents
     except Exception as e:

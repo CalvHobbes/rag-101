@@ -45,27 +45,29 @@ A living document to track implementation progress across all phases.
 | 2.5 | Retrieval Schemas | ✅ |
 | 2.6 | Metadata Filtering | ✅ |
 | 2.7 | Re-ranking | ✅ |
+| 2.8 | Retrieval Orchestration (`retrieve()`) | ✅ |
 
 ---
 
-## Phase 3: Generation (Upcoming)
-
-| Task | Description | Status |
-|------|-------------|--------|
-| 3.1 | Context Assembly | ⬜ |
-| 3.2 | Prompt Template Design | ⬜ |
-| 3.3 | LLM Invocation | ⬜ |
-| 3.4 | Response Parsing | ⬜ |
+## Phase 3: Generation (LLM Integration)
+| ID | Task | Status |
+|----|------|--------|
+| 3.1 | Generation Schemas | ✅ |
+| 3.2 | LLM Factory Implementation | ✅ |
+| 3.3 | Prompt Management | ✅ |
+| 3.4 | Generation Service | ✅ |
+| 3.5 | End-to-End Pipeline | ✅ |
 
 ---
 
-## Phase 4: Citation & Grounding (Upcoming)
+
+## Phase 6: Citations & Grounding
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 4.1 | Source Attribution | ⬜ |
-| 4.2 | Hallucination Control | ⬜ |
-| 4.3 | Confidence Indicators | ⬜ |
+| 6.1 | Generation Schema Updates (Citations) | ✅ |
+| 6.2 | System Prompt Updates (Enforcement) | ✅ |
+| 6.3 | Service Logic (Extraction & Formatting) | ✅ |
 
 ---
 

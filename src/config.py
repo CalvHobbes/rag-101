@@ -22,15 +22,32 @@ class EmbeddingSettings(BaseSettings):
     api_key: str = ""  # Required for openai/jina
 
 
+from enum import Enum
+
+class LLMProvider(str, Enum):
+    OPENAI = "openai"
+    GEMINI = "gemini"
+
+
 class LLMSettings(BaseSettings):
     """Swappable LLM provider configuration (for Query phase)."""
 
     model_config = SettingsConfigDict(env_prefix="LLM__")
 
-    provider: str = "openai"  # openai | ollama | anthropic
+    provider: LLMProvider = LLMProvider.OPENAI
     model: str = "gpt-4o-mini"
     api_key: str = ""
     base_url: str = "http://localhost:11434"  # For Ollama
+
+
+class OpikSettings(BaseSettings):
+    """Opik observability configuration."""
+    
+    model_config = SettingsConfigDict(env_prefix="OPIK_")
+    
+    api_key: str = ""
+    workspace: str = "priya-m"
+    project_name: str = "rag-101"
 
 
 class Settings(BaseSettings):
@@ -52,6 +69,7 @@ class Settings(BaseSettings):
     # Nested settings
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
+    opik: OpikSettings = Field(default_factory=OpikSettings)
 
 
 @lru_cache
