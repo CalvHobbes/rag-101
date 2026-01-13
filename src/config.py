@@ -14,7 +14,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class EmbeddingSettings(BaseSettings):
     """Swappable embedding provider configuration."""
 
-    model_config = SettingsConfigDict(env_prefix="EMBEDDING__")
+    model_config = SettingsConfigDict(
+        env_prefix="EMBEDDING__",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     provider: str = "huggingface"  # huggingface | openai | jina
     model: str = "all-MiniLM-L6-v2"
@@ -32,7 +37,12 @@ class LLMProvider(str, Enum):
 class LLMSettings(BaseSettings):
     """Swappable LLM provider configuration (for Query phase)."""
 
-    model_config = SettingsConfigDict(env_prefix="LLM__")
+    model_config = SettingsConfigDict(
+        env_prefix="LLM__",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     provider: LLMProvider = LLMProvider.OPENAI
     model: str = "gpt-4o-mini"
@@ -43,7 +53,12 @@ class LLMSettings(BaseSettings):
 class OpikSettings(BaseSettings):
     """Opik observability configuration."""
     
-    model_config = SettingsConfigDict(env_prefix="OPIK_")
+    model_config = SettingsConfigDict(
+        env_prefix="OPIK_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
     
     api_key: str = ""
     workspace: str = "priya-m"

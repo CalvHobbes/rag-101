@@ -17,3 +17,7 @@ pytest
 pytest-asyncio
 greenlet # often needed for sqlalchemy async
 
+fastapi
+uvicorn[standard]
+
+tenacity

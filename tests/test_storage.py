@@ -50,6 +50,9 @@ async def test_save_documents_new():
     
     mock_session = AsyncMock()
     mock_session.execute.return_value = mock_exec_result
+    # add and add_all are synchronous methods in SQLAlchemy AsyncSession
+    mock_session.add = MagicMock()
+    mock_session.add_all = MagicMock()
     
     with patch("src.ingestion.storage.db_manager.get_session") as mock_get_session:
         mock_get_session.return_value.__aenter__.return_value = mock_session

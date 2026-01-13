@@ -5,11 +5,11 @@ for a **production-grade Retrieval-Augmented Generation (RAG) system**.
 
 It is intended to be a **living system blueprint**, not a tutorial or a demo.
 The focus is on **correctness, inspectability, and long-term maintainability**.
+The guiding force and principles behind this architecture is https://www.decodingai.com/p/my-ai-production-tech-stack/.
 
 ---
 
 ## Table of Contents
-- [System Architecture Diagram](#system-architecture-diagram)
 - [1. Core Principles](#1-core-principles)
 - [2. RAG System Phases](#2-rag-system-phases-high-level)
 - [3. Ingestion](#3-ingestion)
@@ -819,10 +819,8 @@ Define clean, RESTful endpoints.
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/ingest` | POST | Trigger ingestion for a folder |
 | `/query` | POST | Submit a question, get an answer |
-| `/chunks` | GET | Inspect stored chunks (debug) |
-| `/health` | GET | Health check |
+| `/health` | GET | Health check with dependency verification |
 
 **Request/Response:**
 - Use Pydantic models for all request/response bodies
@@ -895,6 +893,22 @@ Observability does **not**:
 ---
 
 ### 9.2 Observability Tasks & Implementation Choices
+
+### Task 0: Abstraction Layer
+
+**Goal:**  
+Decouple application code from specific observability vendors.
+
+**Tasks:**
+- Implement a vendor-agnostic tracing interface
+- Centralize observability initialization
+- Ensure zero-dependency coupling in core modules
+
+**Implementation:**
+- Facade pattern
+- Type-safe phase tagging
+
+---
 
 ### Task 1: Structured Logging
 

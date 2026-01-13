@@ -15,7 +15,7 @@ def mock_file_info():
         file_size=1024
     )
 
-@patch('langchain_community.document_loaders.PyMuPDFLoader')
+@patch('src.ingestion.document_loader.PyMuPDFLoader')
 def test_load_pdf_success(mock_loader_cls, mock_file_info):
     # Setup mock
     mock_loader = MagicMock()
@@ -71,7 +71,7 @@ def test_unsupported_extension():
     
     assert "Unsupported file type" in str(exc.value)
 
-@patch('langchain_community.document_loaders.PyMuPDFLoader')
+@patch('src.ingestion.document_loader.PyMuPDFLoader')
 def test_load_failure(mock_loader_cls, mock_file_info):
     # Simulate loader crash
     mock_loader_cls.side_effect = Exception("Corrupted file")

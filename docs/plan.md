@@ -71,6 +71,24 @@ A living document to track implementation progress across all phases.
 
 ---
 
+## Phase 8: Serving / API
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 8.1 | FastAPI App Setup | ✅ |
+| 8.2 | `/query` Endpoint | ✅ |
+| 8.3 | `/health` Endpoint (with DB check) | ✅ |
+
+---
+
+## Phase 9: Observability
+| Task | Description | Status |
+|------|-------------|--------|
+| 9.1 | Observability Abstraction Layer | ✅ |
+| 9.2 | Ingestion Tracing | ✅ |
+| 9.3 | Component Refactoring (Tagging) | ✅ |
+
+---
 ## Legend
 
 | Symbol | Meaning |
@@ -80,5 +98,4 @@ A living document to track implementation progress across all phases.
 | ⬜ | Not Started |
 
 ---
-
-*Last updated: 2026-01-12*
+*Last updated: 2026-01-14*

@@ -5,38 +5,23 @@ from src.generation.prompts import get_rag_prompt
 from src.schemas.generation import GenerateRequest, GenerateResponse
 from src.schemas.retrieval import RetrievalResponse
 from src.logging_config import get_logger
-from opik.integrations.langchain import OpikTracer
-import opik
+
 import re
 from src.config import get_settings
 
 log = get_logger(__name__)
 
-# Silence google_genai AFC logs
-import logging
-logging.getLogger("google_genai.models").setLevel(logging.WARNING)
 
 import os
-# Configure Opik globally using settings (auto-detects env vars too)
-# pydantic settings will load OPIK__API_KEY
-settings = get_settings()
+from src.observability import configure_observability, Phase, track, get_llm_callback_handler
 
-# Handle environment variables for Opik SDK
-# Since pydantic-settings reads .env but doesn't set os.environ, we must do it manually
-# for the Opik SDK to pick up the project name automatically.
-os.environ["OPIK_PROJECT_NAME"] = settings.opik.project_name
-if settings.opik.api_key:
-    os.environ["OPIK_API_KEY"] = settings.opik.api_key
-if settings.opik.workspace:
-    os.environ["OPIK_WORKSPACE"] = settings.opik.workspace
+# Configure observability (Opik)
+configure_observability()
 
-opik.configure(use_local=False)
+# Get the generic callback handler for LLM tracing
+llm_tracer = get_llm_callback_handler(phase=Phase.GENERATION)
 
-opik_tracer = OpikTracer(
-    tags=["rag-101"]
-)
-
-@opik.track(name="format_docs")
+@track(name="format_docs")
 def format_docs(retrieval_response: RetrievalResponse) -> str:
     """
     Format retrieved chunks into a single context string with citations.
@@ -74,13 +59,13 @@ def _extract_citations(answer: str) -> List[str]:
     # Deduplicate and sort
     return sorted(list(set(matches)))
 
-@opik.track(name="generate_answer")
+@track(name="generate_answer", phase=Phase.QUERY)
 async def generate_answer(request: GenerateRequest) -> GenerateResponse:
     """
     Orchestrate the RAG pipeline: Retrieve -> Format -> Generate.
     """
     log.info("generation_started", query=request.query)
-    
+        
     # 1. Retrieve
     retrieval_response = await retrieve(
         query=request.query,
@@ -94,6 +79,7 @@ async def generate_answer(request: GenerateRequest) -> GenerateResponse:
         return GenerateResponse(
             query=request.query,
             answer="I could not find any relevant documents to answer your question.",
+            citations=[],
             retrieval_context=retrieval_response
         )
 
@@ -112,7 +98,7 @@ async def generate_answer(request: GenerateRequest) -> GenerateResponse:
     
     try:
         # returns AIMessage
-        ai_message = await llm.ainvoke(messages, config={"callbacks": [opik_tracer]})
+        ai_message = await llm.ainvoke(messages, config={"callbacks": [llm_tracer]})
         answer_text = _parse_llm_content(ai_message.content)
         
         log.info("generation_completed", query=request.query, answer_len=len(answer_text))

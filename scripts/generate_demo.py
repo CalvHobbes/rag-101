@@ -6,8 +6,12 @@ from src.schemas.generation import GenerateRequest
 from src.schemas.retrieval import RetrievalFilter, FileType
 from src.config import get_settings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+from src.logging_config import configure_logging
+from src.observability import configure_observability
+
+# Configure logging & observability
+configure_logging(log_level="INFO", json_format=get_settings().json_logs)
+configure_observability()
 
 import sys
 

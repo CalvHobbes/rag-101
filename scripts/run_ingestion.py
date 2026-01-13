@@ -19,6 +19,9 @@ from src.ingestion.storage import save_documents, check_document_exists
 from src.db.db_manager import db_manager
 from src.schemas.chunks import ChunkCreate
 from src.config import get_settings
+from src.observability import configure_observability, track, Phase, set_trace_metadata
+
+configure_observability()
 
 # Initialize structured logging
 configure_logging(
@@ -32,6 +35,7 @@ def generate_chunk_id(file_hash: str, index: int) -> str:
     """Deterministic ID: hash(file_hash + index)"""
     return hashlib.sha256(f"{file_hash}:{index}".encode()).hexdigest()[:16]
 
+@track(name="process_file")
 async def process_file(file_info: FileInfo, embedder):
     """Run the full pipeline for a single file."""
     try:
@@ -84,6 +88,31 @@ async def process_file(file_info: FileInfo, embedder):
     except Exception as e:
         log.error("file_processing_failed", file_name=file_info.file_path.name, error=str(e))
 
+
+    
+@track(name="ingestion_run", phase=Phase.INGESTION)
+async def ingest_folder(folder_path: Path, run_id: str):
+    """Core ingestion logic wrapped in observability."""
+    set_trace_metadata({"ingestion_run_id": run_id})
+    
+    # Init DB
+    await db_manager.init_db()
+    
+    # Discover
+    files = discover_files(folder_path)
+    log.info("discovery_complete", folder=str(folder_path), files_found=len(files))
+    
+
+    
+    # Init Embedder (once)
+    embedder = get_embedder()
+    
+    # Process sequentially (for now)
+    for file_info in files:
+        await process_file(file_info, embedder)
+    
+    log.info("ingestion_complete", files_processed=len(files))
+
 async def main():
     # Generate a unique run ID for correlation
     run_id = str(uuid.uuid4())[:8]
@@ -95,21 +124,8 @@ async def main():
         
     folder_path = Path(sys.argv[1])
     
-    # Init DB
-    await db_manager.init_db()
+    await ingest_folder(folder_path, run_id)
     
-    # Discover
-    files = discover_files(folder_path)
-    log.info("discovery_complete", folder=str(folder_path), files_found=len(files))
-    
-    # Init Embedder (once)
-    embedder = get_embedder()
-    
-    # Process sequentially (for now)
-    for file_info in files:
-        await process_file(file_info, embedder)
-    
-    log.info("ingestion_complete", files_processed=len(files))
     clear_contextvars()
 
 if __name__ == "__main__":
