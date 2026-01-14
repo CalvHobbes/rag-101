@@ -148,7 +148,7 @@ Next areas to explore as I continue learning:
 | Phase | Area | Planned Features | Status |
 |-------|------|------------------|:------:|
 | **Phase 4** | **Citation & Grounding** | Citation verification (heuristics, LLM-as-judge), groundedness checks, verification cache | ⬜ |
-| **Phase 5** | **Evaluation & Testing** | RAGAS evaluation (faithfulness, relevance), Recall@k/MRR metrics, golden dataset, regression tests | ⬜ |
+| **Phase 5** | **Evaluation & Testing** | RAGAS evaluation (faithfulness, relevance), Recall@k/MRR metrics, golden dataset, integration tests, regression test suite | ⬜ |
 | **Phase 6** | **API Security** | API key authentication, rate limiting, request correlation IDs | ⬜ |
 | **Phase 7** | **Advanced Observability** | Prometheus metrics endpoint, cost tracking dashboard, alerting on SLO violations | ⬜ |
 | **Phase 8** | **Maintenance & Scaling** | HNSW index tuning for pgvector, embedding model migration, data retention policies | ⬜ |
