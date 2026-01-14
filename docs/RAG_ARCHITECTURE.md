@@ -335,3 +335,163 @@ async def health():
 > - hard to misuse  
 
 Correctness first. Automation later. Scale last.
+
+---
+
+## Deferred but Acknowledged Design Areas
+
+The following areas are **intentionally deferred**.
+They are understood, explicitly bounded, and constrained to prevent
+accidental architectural drift or premature complexity.
+
+Deferral does **not** imply ignorance.
+It is a deliberate choice based on current scale, requirements, and
+operational maturity.
+
+---
+
+### Deferred: RAG Orchestration Contract
+
+**Why this matters**
+
+In production systems, implicit orchestration logic tends to leak across
+API handlers, prompts, and framework glue code, making the system harder
+to debug, test, and evolve.
+
+A clearly defined orchestration boundary enables:
+- deterministic execution flow
+- consistent observability
+- simpler evaluation and testing
+
+**Why this is deferred**
+
+The current system follows a simple, linear flow
+(Retrieve → Generate → Cite).
+Introducing a formal orchestration layer at this stage would add
+abstraction overhead without proportional benefit.
+
+**Constraints (Must Hold Even While Deferred)**
+
+- Orchestration logic must remain centralized in a single module
+- API handlers must not embed retrieval or generation logic
+- No RAG phase may call another phase directly outside the orchestration path
+
+This section will be formalized when:
+- multi-step workflows are required, or
+- phase-specific retries or fallbacks are introduced, or
+- partial result handling becomes necessary
+
+---
+
+### Deferred: State & Session Semantics
+
+**Why this matters**
+
+Multi-turn interactions introduce ambiguity around grounding,
+retrieval scope, and answer provenance.
+Without explicit rules, conversational memory can silently undermine
+correctness guarantees.
+
+**Why this is deferred**
+
+This system is intentionally designed as a **single-turn, stateless RAG**
+pipeline.
+Conversational support would require explicit decisions around:
+- memory representation
+- retrieval-time context injection
+- summarization and truncation guarantees
+
+These are not currently required.
+
+**Constraints (Must Hold Even While Deferred)**
+
+- Each request must be processed independently
+- No prompt accumulation across requests
+- No implicit or hidden conversational memory
+
+Any future conversational support must be implemented as an explicit
+retrieval-time mechanism, not prompt carryover.
+
+---
+
+### Deferred: Security & Abuse Considerations
+
+**Why this matters**
+
+RAG systems are vulnerable to:
+- prompt injection
+- retrieval poisoning
+- unintended data leakage through model responses
+
+A formal threat model is required for regulated or multi-tenant
+deployments.
+
+**Why this is deferred**
+
+The current deployment assumes a controlled environment with trusted
+inputs and limited exposure.
+A full security and abuse model would introduce operational and process
+overhead that is not yet required.
+
+**Constraints (Must Hold Even While Deferred)**
+
+- Retrieved content must always be treated as untrusted input
+- Prompts must explicitly constrain the model to provided context
+- User-supplied content must not directly modify system prompts
+- Retrieved documents must never be executed or interpreted as code
+
+A formal threat model will be added prior to any external-facing or
+multi-tenant deployment.
+
+---
+
+### Deferred: Configuration & Version Control Plane
+
+**Why this matters**
+
+Production RAG systems require coordinated versioning across:
+- prompts
+- embedding models
+- chunking strategies
+- retrieval logic
+
+Without a control plane, rollbacks and audits become difficult.
+
+**Why this is deferred**
+
+At the current stage:
+- version changes are infrequent
+- versions are defined in code
+- rollback is handled via code reversion
+
+This keeps the system simpler while stabilizing core behavior.
+
+**Constraints (Must Hold Even While Deferred)**
+
+- Version identifiers must be explicit in code and logs
+- Multiple embedding versions must never mix within a single retrieval path
+- Any version change must be observable through tracing or metadata
+
+A dedicated configuration plane will be introduced when:
+- concurrent experiments are required, or
+- live A/B testing is introduced, or
+- frequent prompt or model iteration becomes necessary
+
+---
+
+### Explicit Non-Goals (For Now)
+
+The following capabilities are intentionally out of scope:
+
+- Autonomous or self-directed agents
+- Tool execution or action-taking by the LLM
+- Self-modifying prompts or online learning
+- Implicit conversational memory
+- Background workflow orchestration
+
+These are excluded to preserve:
+- determinism
+- inspectability
+- correctness guarantees
+
+Any future expansion must not weaken these properties.

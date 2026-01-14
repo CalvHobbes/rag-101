@@ -52,7 +52,7 @@ test_docs/
 
 # Project specific
 ingestion.log*
-prompts/
+.prompts/
 
 # Docs folder 
 docs/IMPLEMENTATION_PLAN.md
