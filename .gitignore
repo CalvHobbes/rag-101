@@ -58,6 +58,7 @@ ingestion.log*
 docs/IMPLEMENTATION_PLAN.md
 docs/PATTERNS_AND_PRINCIPLES.md
 docs/PROGRESS_TRACKER.md
+docs/architecture_review.md
 
 # Debug scripts
 debug_scripts/
