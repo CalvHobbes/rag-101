@@ -88,7 +88,7 @@ If you can't inspect a step, you can't trust it.
 
 ## 2. System Architecture
 
-![RAG System Architecture](gemini%20rag%20101%20architecture%20image.png)
+![RAG System Architecture](rag%20101%20architecture%20image.png)
 
 ### Flow Summary
 
