@@ -42,6 +42,7 @@ def _load_pdf_document(file_info: FileInfo) -> List[Document]:
     """
     Load a PDF file and return a list of LangChain Document objects.
     Each page of the PDF becomes a separate Document.
+    This is where we can switch PDF Loaders if we need to
     """
     try:
         loader = PyMuPDFLoader(str(file_info.file_path))
