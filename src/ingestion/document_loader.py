@@ -7,6 +7,9 @@ from src.logging_config import get_logger
 
 log = get_logger(__name__)
 
+from src.observability import track
+
+@track(name="load_document")
 def load_document(file_info: FileInfo) -> List[Document]:
     """
     Load a file and return a list of LangChain Document objects.

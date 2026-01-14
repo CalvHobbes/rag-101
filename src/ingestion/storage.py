@@ -26,6 +26,9 @@ async def check_document_exists(file_info: FileInfo) -> bool:
         # If it exists AND matches the current hash, return True
         return existing_hash == file_info.file_hash
 
+from src.observability import track
+
+@track(name="save_documents")
 async def save_documents(file_info: FileInfo, chunks: List[ChunkCreate]):
     """
     Idempotent save: 

@@ -23,10 +23,6 @@ def configure_observability():
     Central entry point for observability configuration.
     Currently wraps Opik, but can be extended for others.
     """
-    # Opik configuration via environment variables is standard,
-    # but we can add programmatic overrides here.
-    opik.configure(use_local=False)
-    
     # Handle environment variables for Opik SDK from settings
     from src.config import get_settings
     settings = get_settings()
@@ -36,7 +32,9 @@ def configure_observability():
         os.environ["OPIK_API_KEY"] = settings.opik.api_key
     if settings.opik.workspace:
         os.environ["OPIK_WORKSPACE"] = settings.opik.workspace
-        
+    # Opik configuration via environment variables is standard,
+    # but we can add programmatic overrides here.
+    opik.configure(use_local=False)   
     log.info("observability_configured", provider="opik", project=settings.opik.project_name)
 
 def track(name: Optional[str] = None, phase: Optional[Phase] = None, tags: Optional[List[str]] = None):
@@ -69,7 +67,7 @@ def set_trace_metadata(metadata: dict[str, Any]) -> None:
     """
     Set metadata for the current trace (vendor-agnostic).
     """
-    opik.set_current_trace_metadata(metadata)
+    opik.opik_context.update_current_trace(metadata=metadata)
 
 def get_llm_callback_handler(phase: Optional[Phase] = None, tags: Optional[List[str]] = None) -> Any:
     """

@@ -28,13 +28,14 @@ def get_llm() -> BaseChatModel:
             
         elif llm_context.provider == LLMProvider.GEMINI:
             from langchain_google_genai import ChatGoogleGenerativeAI
-            log.info("llm_initialized", provider=llm_context.provider.value, model=llm_context.model)
+            # Enable converted system messages and disable AFC
             return ChatGoogleGenerativeAI(
                 model=llm_context.model,
                 google_api_key=llm_context.api_key,
                 temperature=0,
                 convert_system_message_to_human=True,
-                timeout=timeout
+                timeout=timeout,
+                model_kwargs={"tool_choice": "none"}
             )
             
         else:
@@ -42,5 +43,5 @@ def get_llm() -> BaseChatModel:
             raise ValueError(f"Unsupported LLM provider: {settings.provider}")
             
     except Exception as e:
-        log.error("llm_init_failed", provider=settings.provider.value, error=str(e))
+        log.error("llm_init_failed", provider=settings.llm.provider.value, error=str(e))
         raise

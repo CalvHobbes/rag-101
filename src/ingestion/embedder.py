@@ -1,8 +1,10 @@
 from functools import lru_cache
+from typing import List
 from langchain_core.embeddings import Embeddings
 from src.config import get_settings
 from src.exceptions import EmbeddingError
 from src.logging_config import get_logger
+from src.observability import track
 
 log = get_logger(__name__)
 
@@ -44,3 +46,10 @@ def get_embedder() -> Embeddings:
     except Exception as e:
         log.error("embedder_init_failed", provider=settings.provider, error=str(e))
         raise EmbeddingError(f"Failed to initialize embedder: {e}")
+
+@track(name="embed_documents")
+async def embed_documents(embedder: Embeddings, texts: List[str]) -> List[List[float]]:
+    """
+    Wrapper to embed documents with observability tracking.
+    """
+    return await embedder.aembed_documents(texts)

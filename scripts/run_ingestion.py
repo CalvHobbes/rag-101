@@ -14,7 +14,7 @@ from src.ingestion.file_discovery import discover_files, FileInfo
 from src.ingestion.document_loader import load_document
 from src.ingestion.text_normalizer import normalize_text
 from src.ingestion.chunker import chunk_documents
-from src.ingestion.embedder import get_embedder
+from src.ingestion.embedder import get_embedder, embed_documents
 from src.ingestion.storage import save_documents, check_document_exists
 from src.db.db_manager import db_manager
 from src.schemas.chunks import ChunkCreate
@@ -61,7 +61,7 @@ async def process_file(file_info: FileInfo, embedder):
 
         # 4. Embed (Batch)
         texts = [doc.page_content for doc in chunked_docs]
-        embeddings = await embedder.aembed_documents(texts)
+        embeddings = await embed_documents(embedder, texts)
         
         # 5. Convert to Schemas (The missing link from before!)
         chunk_creates = []

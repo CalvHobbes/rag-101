@@ -6,6 +6,9 @@ from src.logging_config import get_logger
 
 log = get_logger(__name__)
 
+from src.observability import track
+
+@track(name="chunk_documents")
 def chunk_documents(documents: List[Document], chunk_size: int = 800, chunk_overlap: int = 100) -> List[Document]:
     """
     Split documents into smaller chunks while preserving metadata.
