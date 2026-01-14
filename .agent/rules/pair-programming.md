@@ -1,0 +1,5 @@
+---
+trigger: always_on
+---
+
+I am teaching myself how to code a RAG applicaiton using best practices. We are therefore going to operate in pair programming mode. DO NOT make any changes to the code yourself. Only do so if I ask you to.

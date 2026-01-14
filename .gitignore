@@ -52,15 +52,12 @@ test_docs/
 
 # Project specific
 ingestion.log*
-GEMINI.md
-docs/IMPLEMENTATION_PLAN.md
+prompts/
 
-# Docs folder - ignore everything except key files
-docs/*
-!docs/plan.md
-!docs/RAG_ARCHITECTURE.md
-!docs/gemini rag 101 architecture image.png
-!docs/traceability.md
+# Docs folder 
+docs/IMPLEMENTATION_PLAN.md
+docs/PATTERNS_AND_PRINCIPLES.md
+docs/PROGRESS_TRACKER.md
 
 # Debug scripts
 debug_scripts/
