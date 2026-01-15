@@ -1,4 +1,4 @@
-.PHONY: help install run test test-unit test-integration ingest demo clean
+.PHONY: help install run test test-unit test-integration ingest demo mcp mcp-dev clean
 
 # Default port for the API server
 PORT ?= 8000
@@ -12,6 +12,8 @@ help:
 	@echo "  make test-integration - Run integration tests only"
 	@echo "  make ingest          - Run the ingestion pipeline"
 	@echo "  make demo [QUERY=\"...\"] - Run the generation demo"
+	@echo "  make mcp             - Run the MCP server (stdio)"
+	@echo "  make mcp-dev         - Run MCP server with FastMCP inspector"
 	@echo "  make clean           - Remove build artifacts and cache"
 
 install:
@@ -38,6 +40,12 @@ ifdef QUERY
 else
 	uv run scripts/generate_demo.py
 endif
+
+mcp:
+	PYTHONPATH="$(CURDIR)" uv run python scripts/run_mcp_server.py
+
+mcp-dev:
+	PYTHONPATH="$(CURDIR)" uv run fastmcp dev src/mcp/server.py:mcp
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

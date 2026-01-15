@@ -2,7 +2,7 @@ from typing import List
 from sentence_transformers import CrossEncoder
 from src.schemas.retrieval import RetrievalResult
 from src.logging_config import get_logger
-import opik
+from src.observability import track
 
 log = get_logger(__name__)
 
@@ -18,7 +18,7 @@ def get_reranker_model() -> CrossEncoder:
         _reranker_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
     return _reranker_model
 
-@opik.track(name="rerank_results")
+@track(name="rerank_results")
 def rerank_results(query: str, chunks: List[RetrievalResult], top_k: int) -> List[RetrievalResult]:
     """
     Re-rank the retrieved chunks using a CrossEncoder.

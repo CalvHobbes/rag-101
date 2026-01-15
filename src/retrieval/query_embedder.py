@@ -4,10 +4,11 @@ from src.ingestion.embedder import get_embedder
 from src.config import get_settings
 from src.exceptions import EmbeddingError
 from src.logging_config import get_logger
+from src.observability import track
 
 log = get_logger(__name__)
 
-
+@track(name="embed_query")
 def embed_query(query: str) -> list[float]:
     """
     Convert query text to embedding vector.

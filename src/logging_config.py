@@ -17,7 +17,8 @@ from typing import Optional
 def configure_logging(
     log_level: str = "INFO",
     json_format: bool = True,
-    log_file: Optional[str] = None
+    log_file: Optional[str] = None,
+    use_stderr: bool = False,
 ) -> None:
     """
     Configure structlog with processors for structured output.
@@ -26,6 +27,7 @@ def configure_logging(
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
         json_format: If True, output JSON. If False, use colored console output.
         log_file: Optional path to log file. If provided, logs to both console and file.
+        use_stderr: If True, log to stderr instead of stdout (required for MCP servers).
     """
     # Shared processors for both structlog and stdlib logging
     shared_processors = [
@@ -65,7 +67,8 @@ def configure_logging(
             console_renderer,
         ],
     )
-    console_handler = logging.StreamHandler(sys.stdout)
+    # Console handler - use stderr for MCP servers, stdout otherwise
+    console_handler = logging.StreamHandler(sys.stderr if use_stderr else sys.stdout)
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
     

@@ -9,8 +9,8 @@ from src.logging_config import get_logger
 import re
 from src.config import get_settings
 from src.exceptions import LLMError, LLMRateLimitError, LLMTimeoutError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryCallState
+from src.observability import track
 log = get_logger(__name__)
 
 
@@ -21,7 +21,9 @@ from src.observability import configure_observability, Phase, track, get_llm_cal
 configure_observability()
 
 # Get the generic callback handler for LLM tracing
-llm_tracer = get_llm_callback_handler(phase=Phase.GENERATION)
+# Get the generic callback handler for LLM tracing
+# MOVED inside generate_answer to support ContextVar propagation
+# llm_tracer = get_llm_callback_handler(phase=Phase.GENERATION)
 
 @track(name="format_docs")
 def format_docs(retrieval_response: RetrievalResponse) -> str:
@@ -61,9 +63,26 @@ def _extract_citations(answer: str) -> List[str]:
     # Deduplicate and sort
     return sorted(list(set(matches)))
 
+def wait_smart_backoff(retry_state: RetryCallState) -> float:
+    """
+    Custom wait strategy that respects 'retry_after' from LLMRateLimitError.
+    Otherwise falls back to exponential backoff.
+    """
+    # Default exponential backoff: 2s -> 4s -> 8s ... max 10s (reduced from 70 to sync with fail-fast)
+    exp_wait = wait_exponential(multiplier=1, min=2, max=10)(retry_state)
+    
+    last_exception = retry_state.outcome.exception()
+    if isinstance(last_exception, LLMRateLimitError) and last_exception.retry_after:
+        log.info("rate_limit_smart_wait_check", retry_after=last_exception.retry_after)
+        # return the requested wait time + 1s buffer, but ensure it doesn't exceed reasonable limits implies
+        # we strictly follow the API unless it's huge, but the exception raiser handles the "too huge" check.
+        return max(exp_wait, last_exception.retry_after + 1.0)
+    
+    return exp_wait
+
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(6), # Increased from 3 to cover ~60s reset
+    wait=wait_smart_backoff,    # Use smart custom wait
     retry=retry_if_exception_type((LLMRateLimitError, LLMTimeoutError)),
     reraise=True
 )
@@ -75,7 +94,18 @@ async def _invoke_llm_with_retry(llm, messages, callbacks):
         # Convert provider-specific errors to our exceptions
         error_str = str(e).lower()
         if "rate limit" in error_str or "429" in error_str:
-            raise LLMRateLimitError(str(e)) from e
+            # Parse retry duration from "retry in 55.3s"
+            retry_after = None
+            # Regex to find number before 's'
+            match = re.search(r"retry in (\d+\.?\d*)s", error_str)
+            if match:
+                retry_after = float(match.group(1))
+                if retry_after > 5:
+                    # Fail fast if wait is too long (user requirement: > 5s give up)
+                    log.warning("rate_limit_exceeded_max_wait", wait_required=retry_after, max_allowed=5)
+                    raise LLMError(f"Rate limit wait too long ({retry_after}s > 5s) - aborting retry to show documents.") from e
+            
+            raise LLMRateLimitError(str(e), retry_after=retry_after) from e
         elif "timeout" in error_str or "timed out" in error_str:
             raise LLMTimeoutError(str(e)) from e
         else:
@@ -120,6 +150,7 @@ async def generate_answer(request: GenerateRequest) -> GenerateResponse:
     
     try:
         # returns AIMessage
+        llm_tracer = get_llm_callback_handler(phase=Phase.GENERATION)
         ai_message = await _invoke_llm_with_retry(llm, messages, [llm_tracer])
         answer_text = _parse_llm_content(ai_message.content)
         
@@ -133,10 +164,20 @@ async def generate_answer(request: GenerateRequest) -> GenerateResponse:
         )
     except LLMError as e:
         log.error("generation_degraded", query=request.query, error=str(e))
+        
+        # Fallback: provide raw context so user still gets value
+        fallback_answer = "I'm having trouble generating a detailed response. Here are the relevant documents I found:\n\n" + context_text
+        
+        # Extract sources directly from retrieval results
+        fallback_citations = sorted(list(set(
+            r.metadata.get("source", "Unknown").split("/")[-1] 
+            for r in retrieval_response.results
+        )))
+
         return GenerateResponse(
             query=request.query,
-            answer="I'm having trouble generating a response. Here are the relevant documents I found.",
-            citations=[],
+            answer=fallback_answer,
+            citations=fallback_citations,
             retrieval_context=retrieval_response
         )   
         

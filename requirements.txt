@@ -19,5 +19,6 @@ greenlet # often needed for sqlalchemy async
 
 fastapi
 uvicorn[standard]
+fastmcp
 
 tenacity

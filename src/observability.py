@@ -2,11 +2,16 @@ from enum import Enum
 from typing import Optional, List, Any
 import functools
 import os
+import contextvars
+import inspect
 
 from src.logging_config import get_logger
 import opik
 
 log = get_logger(__name__)
+
+# Context variable for trace source (e.g., 'mcp', 'rest')
+_source_context = contextvars.ContextVar("source_context", default="unknown")
 
 class Phase(Enum):
     """
@@ -37,6 +42,22 @@ def configure_observability():
     opik.configure(use_local=False)   
     log.info("observability_configured", provider="opik", project=settings.opik.project_name)
 
+def set_evaluation_source(source: str) -> None:
+    """
+    Set the source context for the current execution flow.
+    Example: 'mcp', 'rest', 'eval_script'
+    """
+    _source_context.set(source)
+    # Also update the current span immediately so the entry point gets tagged
+    # Note: Opik's update_current_trace applies to the trace, update_current_span to the span
+    # We ideally want it on the trace (root) level? Let's do both or just trace.
+    # update_current_trace adds tags to the trace.
+    try:
+        opik.opik_context.update_current_trace(tags=[f"source:{source}"])
+    except Exception:
+        # Trace might not be active
+        pass
+
 def track(name: Optional[str] = None, phase: Optional[Phase] = None, tags: Optional[List[str]] = None):
     """
     Vendor-agnostic tracking decorator.
@@ -47,20 +68,42 @@ def track(name: Optional[str] = None, phase: Optional[Phase] = None, tags: Optio
         tags: Additional list of string tags.
     """
     def decorator(func):
-        # 1. Resolve tags
-        final_tags = tags or []
+        # 1. Resolve static tags
+        static_tags = tags or []
         if phase:
-            final_tags.append(f"phase:{phase.value}")
+            static_tags.append(f"phase:{phase.value}")
         
         # 2. Wrap with vendor SDK (Opik)
-        # We use functools.wraps to preserve function metadata
-        # which frameworks like FastAPI or Opik rely on.
-        @opik.track(name=name, tags=final_tags)
+        @opik.track(name=name, tags=static_tags)
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        async def async_wrapper(*args, **kwargs):
+            # 3. Resolve dynamic tags (ContextVar) at RUNTIME
+            source = _source_context.get()
+            if source != "unknown":
+                try:
+                    opik.opik_context.update_current_span(tags=[f"source:{source}"])
+                except Exception:
+                    pass
+            
+            return await func(*args, **kwargs)
+
+        @opik.track(name=name, tags=static_tags)
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            # 3. Resolve dynamic tags (ContextVar) at RUNTIME
+            source = _source_context.get()
+            if source != "unknown":
+                try:
+                    opik.opik_context.update_current_span(tags=[f"source:{source}"])
+                except Exception:
+                    pass
+            
             return func(*args, **kwargs)
             
-        return wrapper
+        if inspect.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
     return decorator
 
 def set_trace_metadata(metadata: dict[str, Any]) -> None:
@@ -78,5 +121,11 @@ def get_llm_callback_handler(phase: Optional[Phase] = None, tags: Optional[List[
     final_tags = tags or []
     if phase:
         final_tags.append(f"phase:{phase.value}")
+
+    # Add source tag from context
+    source = _source_context.get()
+    if source != "unknown":
+        final_tags.append(f"source:{source}")
+    
     
     return OpikTracer(tags=final_tags)

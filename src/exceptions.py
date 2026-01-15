@@ -53,7 +53,9 @@ class LLMError(Exception):
 
 class LLMRateLimitError(LLMError):
     """LLM API rate limit exceeded."""
-    pass
+    def __init__(self, message: str, retry_after: float = None):
+        super().__init__(message)
+        self.retry_after = retry_after
 
 class LLMTimeoutError(LLMError):
     """LLM API call timed out."""

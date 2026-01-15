@@ -6,10 +6,11 @@ from src.db.db_manager import db_manager
 from src.exceptions import SimilaritySearchError
 from src.logging_config import get_logger
 from src.schemas.retrieval import RetrievalResult, RetrievalFilter
+from src.observability import track
 
 log = get_logger(__name__)
 
-
+@track(name="search_similar_chunks")
 async def search_similar_chunks(
     query_embedding: list[float],
     top_k: int = 5,

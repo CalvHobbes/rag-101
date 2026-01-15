@@ -22,6 +22,8 @@ log = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     log.info("api_startup")
+    from src.warmup import warmup_models
+    warmup_models()
     yield
     log.info("api_shutdown")
 
