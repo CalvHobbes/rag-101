@@ -27,6 +27,7 @@ log = get_logger(__name__)
 from fastmcp import FastMCP
 from src.generation.service import generate_answer
 from src.schemas.generation import GenerateRequest
+from src.schemas.api import QueryResponse, ContextChunk
 from src.observability import configure_observability, track, Phase, set_evaluation_source
 from src.exceptions import (
     LLMError,
@@ -70,7 +71,24 @@ async def query_rag(
     
     try:
         request = GenerateRequest(query=query, top_k=top_k, rerank=rerank)
-        response = await generate_answer(request)
+        internal_response = await generate_answer(request)
+        
+        # Map to public DTO
+        context_chunks = []
+        for result in internal_response.retrieval_context.results:
+            source_name = result.metadata.get("source", "Unknown").split("/")[-1]
+            context_chunks.append(ContextChunk(
+                content=result.content,
+                source=source_name,
+                page=result.metadata.get("page")
+            ))
+
+        response = QueryResponse(
+            query=internal_response.query,
+            answer=internal_response.answer,
+            citations=internal_response.citations,
+            retrieval_context=context_chunks
+        )
         
         log.info("mcp_query_tool_success", query=query)
         return response.model_dump()
