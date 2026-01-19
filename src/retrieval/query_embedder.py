@@ -9,7 +9,7 @@ from src.observability import track
 log = get_logger(__name__)
 
 @track(name="embed_query")
-def embed_query(query: str) -> list[float]:
+async def embed_query(query: str) -> list[float]:
     """
     Convert query text to embedding vector.
     
@@ -33,8 +33,8 @@ def embed_query(query: str) -> list[float]:
     start_time = time.perf_counter()
     
     try:
-        # embed_query is the LangChain method for single text
-        embedding = embedder.embed_query(query)
+        # aembed_query is the async LangChain method for single text
+        embedding = await embedder.aembed_query(query)
         
         # Validate dimension
         if len(embedding) != settings.dimension:

@@ -36,7 +36,7 @@ async def retrieve(
     processed_query = preprocess_query(query)
     
     # Step 2: Embed
-    embedding = embed_query(processed_query)
+    embedding = await embed_query(processed_query)
     
     # Step 3: Search
     # If reranking, fetch more candidates (e.g., top_k * 3)
@@ -57,7 +57,7 @@ async def retrieve(
     
     # Step 4: Rerank if enabled
     if rerank and results:
-        results = rerank_results(query, results, top_k)
+        results = await rerank_results(query, results, top_k)
     
     return RetrievalResponse(
         query=query,

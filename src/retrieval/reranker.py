@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 from sentence_transformers import CrossEncoder
 from src.schemas.retrieval import RetrievalResult
@@ -19,9 +20,12 @@ def get_reranker_model() -> CrossEncoder:
     return _reranker_model
 
 @track(name="rerank_results")
-def rerank_results(query: str, chunks: List[RetrievalResult], top_k: int) -> List[RetrievalResult]:
+async def rerank_results(query: str, chunks: List[RetrievalResult], top_k: int) -> List[RetrievalResult]:
     """
     Re-rank the retrieved chunks using a CrossEncoder.
+    
+    CrossEncoder scoring is CPU-intensive, so we run it in a thread pool
+    to avoid blocking the async event loop.
     
     Args:
         query: The user query
@@ -39,8 +43,8 @@ def rerank_results(query: str, chunks: List[RetrievalResult], top_k: int) -> Lis
     # Prepare pairs for scoring: [(query, chunk_content), ...]
     pairs = [[query, chunk.content] for chunk in chunks]
     
-    # Predict scores
-    scores = model.predict(pairs)
+    # Run CPU-heavy CrossEncoder prediction in thread pool to avoid blocking event loop
+    scores = await asyncio.to_thread(model.predict, pairs)
     
     # Store CrossEncoder scores in dedicated rerank_score field
     # Note: CrossEncoder scores are not normalized cosine similarities (they can be negative)
