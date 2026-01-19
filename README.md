@@ -170,7 +170,9 @@ Core RAG pipeline with observability foundation.
 | **API** | FastAPI setup, `/query` endpoint, `/health` with DB checks, exception handlers | ✅ |
 | **Observability** | Vendor-neutral tracing abstraction (Opik), structured logging, phase-based tagging, graceful degradation | ✅ |
 | **Resilience** | Custom exception hierarchy, timeouts (DB/LLM/parsing), graceful degradation, retry logic, **basic unit tests** | ✅ |
+
 | **Data** | PostgreSQL + pgvector, SQLAlchemy async, idempotency checks, hash-based change detection | ✅ |
+| **Citations** | Source attribution (inline regex), deduplication, schema integration | ✅ |
 
 ### 🔧 Phase 2: Advanced Features (Planned)
 
@@ -178,7 +180,7 @@ Next areas to explore as I continue learning:
 
 | Phase | Area | Planned Features | Status |
 |-------|------|------------------|:------:|
-| **Phase 4** | **Citation & Grounding** | Citation verification (heuristics, LLM-as-judge), groundedness checks, verification cache | ⬜ |
+| **Phase 4** | **Citation Verification** | Citation verification (heuristics, LLM-as-judge), groundedness checks, verification cache | ⬜ |
 | **Phase 5** | **Evaluation & Testing** | RAGAS evaluation (faithfulness, relevance), Recall@k/MRR metrics, golden dataset, integration tests, **comprehensive unit tests** (error paths, mocks, edge cases), regression test suite | ⬜ |
 | **Phase 6** | **API Security** | API key authentication, rate limiting, request correlation IDs | ⬜ |
 | **Phase 7** | **Advanced Observability** | Prometheus metrics endpoint, cost tracking dashboard, alerting on SLO violations | ⬜ |

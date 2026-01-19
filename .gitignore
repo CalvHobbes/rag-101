@@ -46,7 +46,6 @@ logs/
 .coverage
 htmlcov/
 test_docs/
-blog/
 
 # macOS
 .DS_Store
@@ -56,9 +55,7 @@ ingestion.log*
 .prompts/
 
 # Docs folder 
-docs/IMPLEMENTATION_PLAN.md
 docs/PATTERNS_AND_PRINCIPLES.md
-docs/PROGRESS_TRACKER.md
 docs/architecture_review.md
 
 # Debug scripts
