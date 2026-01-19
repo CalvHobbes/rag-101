@@ -218,3 +218,17 @@ async def test_retrieve_flow():
         assert isinstance(response, RetrievalResponse)
         assert response.query == "raw query "
         assert len(response.results) == 1
+
+@pytest.mark.asyncio
+async def test_retrieval_result_allows_negative_similarity():
+    """Verify that RetrievalResult accepts negative similarity scores (valid for cosine)."""
+    result = RetrievalResult(
+        chunk_id="c1", 
+        content="foo", 
+        metadata={}, 
+        document_id=1, 
+        created_at="2023-01-01T00:00:00", 
+        file_path="a.txt", 
+        similarity=-0.5
+    )
+    assert result.similarity == -0.5
