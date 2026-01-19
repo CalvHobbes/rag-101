@@ -27,7 +27,8 @@ cp .env.example .env
 ```
 
 **Required:**
-- `LLM__API_KEY` - Your LLM provider API key (OpenAI, Gemini, etc.)
+- `LLM__PROVIDER` - LLM provider: `openai` or `gemini`
+- `LLM__API_KEY` - Your LLM provider API key
 
 **Optional:**
 - `OPIK__API_KEY` - For observability/tracing (get free key at [comet.com/opik](https://www.comet.com/opik))
