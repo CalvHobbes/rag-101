@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, text
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
@@ -21,7 +21,7 @@ class Chunk(Base):
     
     embedding = Column(Vector(EMBEDDING_DIM))
     
-    metadata_ = Column("metadata", JSONB, default={})
+    metadata_ = Column("metadata", JSONB, server_default=text("'{}'::jsonb"))
     created_at = Column(DateTime, default=datetime.utcnow)
     # --- Link to Parent ---
     document_id = Column(Integer, ForeignKey("source_documents.id", ondelete="CASCADE"), nullable=True)
