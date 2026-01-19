@@ -5,6 +5,7 @@ Provides the same functionality as the REST /query endpoint
 with equivalent error handling, logging, and observability.
 """
 import os
+from pathlib import Path
 
 # Suppress Opik SDK console output (it prints to stdout which breaks MCP JSON protocol)
 # Must be set BEFORE importing opik
@@ -76,7 +77,8 @@ async def query_rag(
         # Map to public DTO
         context_chunks = []
         for result in internal_response.retrieval_context.results:
-            source_name = result.metadata.get("source", "Unknown").split("/")[-1]
+            source_raw = result.metadata.get("source", "Unknown")
+            source_name = Path(source_raw.replace("\\", "/")).name
             context_chunks.append(ContextChunk(
                 content=result.content,
                 source=source_name,

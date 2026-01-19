@@ -47,9 +47,9 @@ async def test_graceful_degradation_on_timeout():
             # 3. Verify Graceful Degradation
             assert response.query == "test timeout"
             # It should fallback to the degradation message
-            assert "I'm having trouble generating a response" in response.answer, \
+            assert "I'm having trouble generating a detailed response" in response.answer, \
                 f"Expected fallback message, got: {response.answer}"
             assert "Relevant content" in str(response.retrieval_context)
-            assert response.citations == []
+            assert response.citations == ["doc.pdf"]
 
 

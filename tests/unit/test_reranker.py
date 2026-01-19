@@ -21,7 +21,8 @@ def mock_chunks():
     ]
 
 @patch('src.retrieval.reranker.CrossEncoder')
-def test_rerank_results(mock_cross_encoder_cls, mock_chunks):
+@pytest.mark.asyncio
+async def test_rerank_results(mock_cross_encoder_cls, mock_chunks):
     # Setup mock behavior
     mock_model = MagicMock()
     # Mock scores: make the last item (Carrots) the most relevant for query "vegetable"
@@ -33,7 +34,7 @@ def test_rerank_results(mock_cross_encoder_cls, mock_chunks):
         query = "vegetable"
         top_k = 2
         
-        results = rerank_results(query, mock_chunks, top_k=top_k)
+        results = await rerank_results(query, mock_chunks, top_k=top_k)
         
         # Verify call arguments
         # Pairs should be [(query, content)...]
@@ -47,9 +48,9 @@ def test_rerank_results(mock_cross_encoder_cls, mock_chunks):
         # Verify results
         assert len(results) == 2
         assert results[0].content == "Carrots are orange vegetables" # Highest score (0.9)
-        assert results[0].similarity == 0.9
+        assert results[0].rerank_score == 0.9
         assert results[1].content == "Banana is yellow" # Second highest (0.2)
-        assert results[1].similarity == 0.2
+        assert results[1].rerank_score == 0.2
 
 @patch('src.retrieval.reranker.CrossEncoder')
 def test_get_reranker_model_singleton(mock_cross_encoder_cls):

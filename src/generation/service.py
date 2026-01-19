@@ -7,6 +7,7 @@ from src.schemas.retrieval import RetrievalResponse
 from src.logging_config import get_logger
 
 import re
+from pathlib import Path
 from src.config import get_settings
 from src.exceptions import LLMError, LLMRateLimitError, LLMTimeoutError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryCallState
@@ -32,7 +33,8 @@ def format_docs(retrieval_response: RetrievalResponse) -> str:
     """
     formatted_chunks = []
     for result in retrieval_response.results:
-        source_name = result.metadata.get("source", "Unknown Source").split("/")[-1]
+        source_raw = result.metadata.get("source", "Unknown Source")
+        source_name = Path(source_raw.replace("\\", "/")).name
         chunk_text = f"[Source: {source_name}]\n{result.content}"
         formatted_chunks.append(chunk_text)
     
@@ -170,7 +172,7 @@ async def generate_answer(request: GenerateRequest) -> GenerateResponse:
         
         # Extract sources directly from retrieval results
         fallback_citations = sorted(list(set(
-            r.metadata.get("source", "Unknown").split("/")[-1] 
+            Path(r.metadata.get("source", "Unknown").replace("\\", "/")).name
             for r in retrieval_response.results
         )))
 

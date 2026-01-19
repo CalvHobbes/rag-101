@@ -2,6 +2,7 @@
 Query endpoint for RAG generation.
 """
 from fastapi import APIRouter, HTTPException
+from pathlib import Path
 
 from src.schemas.generation import GenerateRequest
 from src.schemas.api import QueryResponse, ContextChunk
@@ -31,8 +32,9 @@ async def query(request: GenerateRequest) -> QueryResponse:
     # Map to public DTO
     context_chunks = []
     for result in internal_response.retrieval_context.results:
-        # Extract filename from "path/to/file.pdf"
-        source_name = result.metadata.get("source", "Unknown").split("/")[-1]
+        # Extract filename from "path/to/file.pdf" or "C:\\path\\to\\file.pdf"
+        source_raw = result.metadata.get("source", "Unknown")
+        source_name = Path(source_raw.replace("\\", "/")).name
         
         context_chunks.append(ContextChunk(
             content=result.content,
