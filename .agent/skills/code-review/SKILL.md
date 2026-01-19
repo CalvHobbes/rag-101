@@ -4,8 +4,7 @@ description: Reviews code changes for bugs, style issues, and best practices. Us
 ---
 
 # Code Review Skill
-
-When reviewing code, follow these steps:
+The code uses the architecture and principles outlined in docs/RAG_ARCHITECTURE.md.When reviewing code, follow these steps:
 
 ## Review checklist
 
@@ -19,3 +18,4 @@ When reviewing code, follow these steps:
 - Be specific about what needs to change
 - Explain why, not just what
 - Suggest alternatives when possible
+- Create the code review report with a timestamp under docs/code-review/ directory (create the directory if it doesn't exist)

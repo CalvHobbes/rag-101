@@ -61,3 +61,5 @@ docs/architecture_review.md
 # Debug scripts
 debug_scripts/
 
+docs/code-review/*
+.codex/

@@ -3,7 +3,7 @@ import time
 from typing import Optional, Any
 from sqlalchemy import text
 from src.db.db_manager import db_manager
-from src.exceptions import SimilaritySearchError
+from src.exceptions import SimilaritySearchError, QueryPreprocessingError
 from src.logging_config import get_logger
 from src.schemas.retrieval import RetrievalResult, RetrievalFilter
 from src.observability import track
@@ -43,9 +43,11 @@ async def search_similar_chunks(
         WHERE 1=1
     """
 
-    # 3. Dynamic Filter Construction
+    # 3. Dynamic Filter Construction (allowlist to prevent SQL injection)
     if metadata_filter:
         filter_dict = metadata_filter.model_dump(exclude_unset=True)
+
+        allowed_metadata_keys = set(RetrievalFilter.model_fields.keys())
         
         for key, value in filter_dict.items():
             if key == "file_type":
@@ -53,6 +55,9 @@ async def search_similar_chunks(
                 sql += " AND c.metadata->>'source' ILIKE :file_type_pattern"
                 params["file_type_pattern"] = f"%.{value.value}"
             
+            elif key not in allowed_metadata_keys:
+                raise QueryPreprocessingError(f"Unsupported metadata filter key: {key}")
+
             elif isinstance(value, list):
                 # source IN [...]
                 sql += f" AND c.metadata->>'{key}' = ANY(:{key}_val)"
@@ -101,6 +106,8 @@ async def search_similar_chunks(
         
         return chunks
         
+    except QueryPreprocessingError:
+        raise
     except SimilaritySearchError:
         raise
     except Exception as e:

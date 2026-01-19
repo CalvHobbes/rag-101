@@ -5,7 +5,8 @@ from src.retrieval.query_preprocessor import preprocess_query
 from src.retrieval.similarity_search import search_similar_chunks
 from src.retrieval.query_embedder import embed_query
 from src.retrieval.retriever import retrieve
-from src.schemas.retrieval import RetrievalFilter, RetrievalResult, RetrievalResponse
+from src.schemas.retrieval import RetrievalFilter, RetrievalResult, RetrievalResponse, FileType
+from src.exceptions import QueryPreprocessingError
 
 # --- Preprocessor Tests ---
 
@@ -147,6 +148,36 @@ async def test_search_metadata_filter():
         # Note: exact SQL check is hard without compiling, but we check for intention
         # The code uses: metadata->>'source' ILIKE :source_pattern
         assert "ilike" in sql_str or "metadata" in sql_str
+
+@pytest.mark.asyncio
+async def test_search_metadata_filter_file_type_uses_ilike():
+    """file_type should map to an ILIKE filter on source."""
+    mock_session = AsyncMock()
+    mock_session.execute.return_value = MagicMock(all=lambda: [])
+
+    with patch("src.retrieval.similarity_search.db_manager.get_session") as mock_get_session:
+        mock_get_session.return_value.__aenter__.return_value = mock_session
+
+        query_vec = [0.1] * 384
+        filters = RetrievalFilter(file_type=FileType.PDF)
+
+        await search_similar_chunks(query_vec, metadata_filter=filters)
+
+        stmt = mock_session.execute.call_args[0][0]
+        sql_str = str(stmt).lower()
+        assert "ilike" in sql_str
+
+@pytest.mark.asyncio
+async def test_search_metadata_filter_rejects_unknown_key():
+    """Reject unsupported metadata filter keys to prevent SQL injection."""
+    with patch("src.retrieval.similarity_search.db_manager.get_session") as mock_get_session:
+        query_vec = [0.1] * 384
+        filters = RetrievalFilter(source="test.pdf", foo="bar")
+
+        with pytest.raises(QueryPreprocessingError, match="Unsupported metadata filter key"):
+            await search_similar_chunks(query_vec, metadata_filter=filters)
+
+        mock_get_session.assert_not_called()
 
 
 # --- Orchestration Tests ---
