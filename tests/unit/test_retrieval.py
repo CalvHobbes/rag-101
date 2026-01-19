@@ -44,37 +44,39 @@ class TestQueryPreprocessor:
 
 # --- Query Embedder Tests ---
 
+@pytest.mark.asyncio
 @patch("src.retrieval.query_embedder.get_embedder")
 @patch("src.retrieval.query_embedder.get_settings")
-def test_embed_query_delegation(mock_settings, mock_get_embedder):
+async def test_embed_query_delegation(mock_settings, mock_get_embedder):
     """Should delegate to the underlying embedder correctly."""
     
     # Setup mocks
     mock_settings.return_value.embedding.dimension = 384
     mock_embedder_instance = MagicMock()
-    mock_embedder_instance.embed_query.return_value = [0.1] * 384
+    mock_embedder_instance.aembed_query = AsyncMock(return_value=[0.1] * 384)
     mock_get_embedder.return_value = mock_embedder_instance
     
-    vector = embed_query("test query")
+    vector = await embed_query("test query")
     
-    mock_embedder_instance.embed_query.assert_called_once_with("test query")
+    mock_embedder_instance.aembed_query.assert_called_once_with("test query")
     assert len(vector) == 384
 
+@pytest.mark.asyncio
 @patch("src.retrieval.query_embedder.get_embedder")
 @patch("src.retrieval.query_embedder.get_settings")
-def test_embed_query_dimension_mismatch(mock_settings, mock_get_embedder):
+async def test_embed_query_dimension_mismatch(mock_settings, mock_get_embedder):
     """Should raise error if dimension mismatches config."""
     
     # Config says 384, model returns 2
     mock_settings.return_value.embedding.dimension = 384
     mock_embedder_instance = MagicMock()
-    mock_embedder_instance.embed_query.return_value = [0.1, 0.2]
+    mock_embedder_instance.aembed_query = AsyncMock(return_value=[0.1, 0.2])
     mock_get_embedder.return_value = mock_embedder_instance
     
     # Should check dimension
     from src.exceptions import EmbeddingError
     with pytest.raises(EmbeddingError, match="Dimension mismatch"):
-        embed_query("test")
+        await embed_query("test")
 
 
 # --- Similarity Search Tests ---

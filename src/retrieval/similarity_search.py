@@ -24,7 +24,7 @@ async def search_similar_chunks(
     
     # 1. Initialize params dict FIRST
     params = {
-        "query_embedding": str(query_embedding),
+        "query_embedding": query_embedding,
         "top_k": top_k,
     }
 
@@ -37,7 +37,7 @@ async def search_similar_chunks(
             c.document_id,
             c.created_at,
             sd.file_path,
-            1 - (c.embedding <=> :query_embedding) AS similarity
+            1 - (c.embedding <=> :query_embedding::vector) AS similarity
         FROM chunks c
         LEFT JOIN source_documents sd ON c.document_id = sd.id
         WHERE 1=1
@@ -69,12 +69,12 @@ async def search_similar_chunks(
     
     # 4. Add Threshold 
     if distance_threshold is not None:
-        sql += " AND (c.embedding <=> :query_embedding) < :threshold"
+        sql += " AND (c.embedding <=> :query_embedding::vector) < :threshold"
         params["threshold"] = distance_threshold
     
     # 5. Order & Limit
     sql += """
-        ORDER BY c.embedding <=> :query_embedding
+        ORDER BY c.embedding <=> :query_embedding::vector
         LIMIT :top_k
     """
     
