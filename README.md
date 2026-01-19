@@ -16,6 +16,7 @@ A production-aligned modular RAG (Retrieval-Augmented Generation) system built a
 ## 🛠️ Quick Start
 
 ### 1. Prerequisites
+- Python 3.11+
 - Docker (for PostgreSQL + pgvector)
 - `uv` (modern Python package manager)
 
@@ -24,7 +25,12 @@ Copy the example environment file and fill in your API keys:
 ```bash
 cp .env.example .env
 ```
-Required keys: `OPENAI_API_KEY` (or equivalent), `DATABASE_URL`.
+
+**Required:**
+- `LLM__API_KEY` - Your LLM provider API key (OpenAI, Gemini, etc.)
+
+**Optional:**
+- `OPIK__API_KEY` - For observability/tracing (get free key at [comet.com/opik](https://www.comet.com/opik))
 
 ### 3. Start Database
 ```bash
@@ -76,6 +82,29 @@ The API is built with FastAPI. Once running, you can access the automatic intera
 }
 ```
 
+## 🤖 MCP Server (AI Assistant Integration)
+
+The project includes an MCP (Model Context Protocol) server that exposes RAG as a tool for AI assistants like Claude Desktop.
+
+### Running the MCP Server
+```bash
+uv run scripts/run_mcp_server.py
+```
+
+### Claude Desktop Configuration
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "rag-101": {
+      "command": "uv",
+      "args": ["run", "scripts/run_mcp_server.py"],
+      "cwd": "/path/to/rag-101"
+    }
+  }
+}
+```
+
 ## 🧪 Testing
 
 The codebase maintains a strict separation between fast unit tests and slower integration tests.
@@ -107,6 +136,7 @@ src/
 ├── generation/         # LLM interaction & RAG logic
 ├── ingestion/          # Document loading, chunking, embedding
 ├── logging_config.py   # Structured logging configuration
+├── mcp/                # MCP server for AI assistant integration
 ├── models/             # SQLAlchemy ORM models
 ├── observability.py    # Tracing abstraction layer
 ├── retrieval/          # Semantic search & query preprocessing
