@@ -11,7 +11,7 @@ A production-aligned modular RAG (Retrieval-Augmented Generation) system built a
   - Graceful degradation (fallback to search results if LLM fails).
   - Explicit timeouts for DB, Parsing, and External APIs.
 - **Observability**: Vendor-neutral tracing abstraction (currently unified with Opik).
-- **Modern Stack**: Python 3.11, FastAPI, SQLAlchemy (Async), Pydantic V2, `uv` for package management.
+- **Modern Stack**: Python 3.11, FastAPI, SQLAlchemy (Async), PostgreSQL + pgvector, Pydantic V2, `uv` for package management.
 
 ## 🛠️ Quick Start
 
