@@ -42,14 +42,14 @@ def rerank_results(query: str, chunks: List[RetrievalResult], top_k: int) -> Lis
     # Predict scores
     scores = model.predict(pairs)
     
-    # Update similarity scores in our objects
+    # Store CrossEncoder scores in dedicated rerank_score field
     # Note: CrossEncoder scores are not normalized cosine similarities (they can be negative)
-    # but they are better for ranking. We update the score for the final response.
+    # but they are better for ranking. We preserve the original cosine similarity.
     for chunk, score in zip(chunks, scores):
-        chunk.similarity = float(score)
+        chunk.rerank_score = float(score)
         
-    # Sort by new score (descending)
-    chunks.sort(key=lambda x: x.similarity, reverse=True)
+    # Sort by rerank score (descending)
+    chunks.sort(key=lambda x: x.rerank_score or 0, reverse=True)
     
     log.info("reranking_completed", input_count=len(chunks), top_k=top_k)
     

@@ -23,7 +23,8 @@ class RetrievalFilter(BaseModel):
 
 class RetrievalResult(ChunkResponse):
     """A single retrieved chunk with similarity score."""
-    similarity: float = Field(ge=0, le=1, description="Cosine similarity (1 = identical)")
+    similarity: float = Field(ge=0, le=1, description="Cosine similarity from initial retrieval (1 = identical)")
+    rerank_score: Optional[float] = Field(default=None, description="Reranker relevance score (if reranked)")
 
 class RetrievalResponse(BaseModel):
     """Full retrieval response with query info."""
