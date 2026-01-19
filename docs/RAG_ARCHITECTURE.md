@@ -259,7 +259,9 @@ async def health():
 - Costs tracked per request
 - Debugging possible without code changes
 
-📖 **[Detailed Observability Guide →](observability/overview.md)**
+📖 **Detailed Guides:**
+- [Observability Overview](observability/overview.md)
+- [Traceability Basics](observability/traceability-basics.md)
 
 ---
 

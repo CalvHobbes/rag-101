@@ -46,6 +46,7 @@ logs/
 .coverage
 htmlcov/
 test_docs/
+blog/
 
 # macOS
 .DS_Store

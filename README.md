@@ -162,7 +162,6 @@ Next areas to explore as I continue learning:
 Comprehensive guides for each system component:
 
 - **[RAG Architecture](https://github.com/CalvHobbes/rag-101/blob/main/docs/RAG_ARCHITECTURE.md)** - Core principles, system design, and phased architecture
-- **[Patterns & Principles](https://github.com/CalvHobbes/rag-101/blob/main/docs/PATTERNS_AND_PRINCIPLES.md)** - Design philosophy and best practices
 - **[Ingestion Overview](https://github.com/CalvHobbes/rag-101/blob/main/docs/ingestion/overview.md)** - Document processing pipeline
 - **[Retrieval Overview](https://github.com/CalvHobbes/rag-101/blob/main/docs/retrieval/overview.md)** - Semantic search and reranking
 - **[Generation Overview](https://github.com/CalvHobbes/rag-101/blob/main/docs/generation/overview.md)** - LLM integration and prompting
