@@ -40,7 +40,7 @@ def get_llm() -> BaseChatModel:
             
         else:
             # Should be unreachable due to Pydantic validation, but good safety net
-            raise ValueError(f"Unsupported LLM provider: {settings.provider}")
+            raise ValueError(f"Unsupported LLM provider: {llm_context.provider}")
             
     except Exception as e:
         log.error("llm_init_failed", provider=settings.llm.provider.value, error=str(e))
