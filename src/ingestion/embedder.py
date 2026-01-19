@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import List
 from langchain_core.embeddings import Embeddings
-from src.config import get_settings
+from src.config import get_settings, EmbeddingProvider
 from src.exceptions import EmbeddingError
 from src.logging_config import get_logger
 from src.observability import track
@@ -19,18 +19,15 @@ def get_embedder() -> Embeddings:
     timeout = full_settings.timeout.embedding_seconds
     
     try:
-        if settings.provider == "huggingface":
+        if settings.provider == EmbeddingProvider.HUGGINGFACE:
             # Lazy import to avoid hard dependency if using OpenAI
             from langchain_huggingface import HuggingFaceEmbeddings
-            log.info("embedder_initialized", provider=settings.provider, model=settings.model)
+            log.info("embedder_initialized", provider=settings.provider.value, model=settings.model)
             return HuggingFaceEmbeddings(model_name=settings.model)
             
-        elif settings.provider == "openai":
+        elif settings.provider == EmbeddingProvider.OPENAI:
             from langchain_openai import OpenAIEmbeddings
-            if not settings.api_key:
-                raise EmbeddingError("OpenAI API key is missing in configuration.")
-                
-            log.info("embedder_initialized", provider=settings.provider, model=settings.model)
+            log.info("embedder_initialized", provider=settings.provider.value, model=settings.model)
             return OpenAIEmbeddings(
                 model=settings.model, 
                 api_key=settings.api_key,
@@ -38,13 +35,13 @@ def get_embedder() -> Embeddings:
             )
             
         else:
-            raise EmbeddingError(f"Unsupported embedding provider: {settings.provider}")
+            raise EmbeddingError(f"Unsupported embedding provider: {settings.provider.value}")
             
     except ImportError as e:
-        log.error("embedder_import_failed", provider=settings.provider, error=str(e))
-        raise EmbeddingError(f"Missing dependency for {settings.provider}: {e}")
+        log.error("embedder_import_failed", provider=settings.provider.value, error=str(e))
+        raise EmbeddingError(f"Missing dependency for {settings.provider.value}: {e}")
     except Exception as e:
-        log.error("embedder_init_failed", provider=settings.provider, error=str(e))
+        log.error("embedder_init_failed", provider=settings.provider.value, error=str(e))
         raise EmbeddingError(f"Failed to initialize embedder: {e}")
 
 @track(name="embed_documents")
