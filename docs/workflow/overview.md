@@ -78,6 +78,29 @@ Per [RAG_ARCHITECTURE.md](../RAG_ARCHITECTURE.md#310-durable-workflows-deferred)
 - `worker_concurrency` limits parallel executions
 - First-in, first-out (FIFO) ordering
 
+### Retry & Resume Behavior
+
+DBOS distinguishes between **step-level retries** and **workflow-level resume**:
+
+**Step-Level Retries:**
+```python
+@DBOS.step(retries_allowed=True, max_attempts=3, backoff_rate=2.0)
+```
+- Configured per-step via decorator
+- Automatic retry on transient failures (e.g., API rate limits)
+
+**Workflow-Level Resume:**
+
+| Workflow Status | Resume Available? | Method |
+|-----------------|-------------------|--------|
+| `CANCELLED` | ✅ Yes | `DBOS.resume_workflow(workflow_id)` |
+| `MAX_RECOVERY_ATTEMPTS` | ✅ Yes | `DBOS.resume_workflow(workflow_id)` |
+| `ERROR` | ❌ No | Use `fork_workflow()` to restart from specific step |
+
+> [!NOTE]
+> In DBOS Conductor, the **Resume** button is only enabled for `CANCELLED` or `MAX_RECOVERY_ATTEMPTS` workflows.
+> Workflows with `ERROR` status are considered "completed with failure" - use `fork_workflow()` to retry from a specific step.
+
 ---
 
 ## Implementation
