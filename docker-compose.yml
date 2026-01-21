@@ -1,4 +1,7 @@
 services:
+  # ============================================
+  # RAG Application Database
+  # ============================================
   postgres:
     image: pgvector/pgvector:pg16
     container_name: rag-postgres
@@ -15,6 +18,49 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # ============================================
+  # DBOS Conductor (self-hosted workflow monitoring)
+  # ============================================
+  dbos-conductor:
+    image: dbosdev/conductor
+    container_name: dbos-conductor
+    environment:
+      # Conductor uses the RAG database for its state
+      DBOS__CONDUCTOR_DB_URL: postgresql://postgres:postgres@postgres:5432/rag?sslmode=disable
+      # License Key (required for production/commercial use - optional for dev)
+      # DBOS_CONDUCTOR_LICENSE_KEY: "your-license-key"
+    ports:
+      - "9090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ 'CMD', 'curl', '-f', 'http://localhost:8090/healthz' ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # DBOS Console (web UI for workflow monitoring)
+  # ============================================
+  dbos-console:
+    image: dbosdev/console
+    container_name: dbos-console
+    environment:
+      DBOS_CONDUCTOR_URL: 'dbos-conductor:8090'
+    ports:
+      - "9080:80" # Access at http://localhost:9080
+    depends_on:
+      dbos-conductor:
+        condition: service_healthy
+    healthcheck:
+      test: [ 'CMD', 'curl', '-f', 'http://localhost/health' ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
 volumes:
   pgdata:

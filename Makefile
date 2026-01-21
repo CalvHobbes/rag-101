@@ -1,20 +1,21 @@
-.PHONY: help install run test test-unit test-integration ingest demo mcp mcp-dev clean
+.PHONY: help install run test test-unit test-integration ingest ingest-workflow demo mcp mcp-dev clean
 
 # Default port for the API server
 PORT ?= 8000
 
 help:
 	@echo "Available commands:"
-	@echo "  make install         - Install dependencies with uv"
-	@echo "  make run [PORT=8000] - Run the API server"
-	@echo "  make test            - Run all tests"
-	@echo "  make test-unit       - Run unit tests only"
-	@echo "  make test-integration - Run integration tests only"
-	@echo "  make ingest          - Run the ingestion pipeline"
+	@echo "  make install           - Install dependencies with uv"
+	@echo "  make run [PORT=8000]   - Run the API server"
+	@echo "  make test              - Run all tests"
+	@echo "  make test-unit         - Run unit tests only"
+	@echo "  make test-integration  - Run integration tests only"
+	@echo "  make ingest            - Run the ingestion pipeline (manual)"
+	@echo "  make ingest-workflow FOLDER=<path> - Run DBOS workflow ingestion"
 	@echo "  make demo [QUERY=\"...\"] - Run the generation demo"
-	@echo "  make mcp             - Run the MCP server (stdio)"
-	@echo "  make mcp-dev         - Run MCP server with FastMCP inspector"
-	@echo "  make clean           - Remove build artifacts and cache"
+	@echo "  make mcp               - Run the MCP server (stdio)"
+	@echo "  make mcp-dev           - Run MCP server with FastMCP inspector"
+	@echo "  make clean             - Remove build artifacts and cache"
 
 install:
 	uv sync
@@ -32,7 +33,15 @@ test-integration:
 	uv run pytest tests/integration
 
 ingest:
-	uv run scripts/run_ingestion.py
+	uv run python scripts/run_ingestion.py
+
+ingest-workflow:
+ifndef FOLDER
+	@echo "Usage: make ingest-workflow FOLDER=<path>"
+	@echo "Example: make ingest-workflow FOLDER=./data/documents"
+	@exit 1
+endif
+	uv run python scripts/run_ingestion_workflow.py $(FOLDER)
 
 demo:
 ifdef QUERY

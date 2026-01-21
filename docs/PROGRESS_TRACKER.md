@@ -151,9 +151,12 @@ A living document to track implementation progress across all phases.
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 10.1 | Evaluate Need for Workflow Orchestration | ⬜ |
-| 10.2 | Step-level Caching for Debugging | ⬜ |
-| 10.3 | Checkpoint & Resume Capability | ⬜ |
+| 10.1 | Evaluate Need for Workflow Orchestration | ✅ |
+| 10.2 | DBOS Workflow Design ([Implementation Plan](../implementation_plan.md)) | ✅ |
+| 10.3 | Workflow Documentation (`docs/workflow/`) | ✅ |
+| 10.4 | Implement `src/ingestion/workflow.py` | 🔄 |
+| 10.5 | Implement `scripts/run_ingestion_workflow.py` | ⬜ |
+| 10.6 | Integration Testing (Resume, Concurrency) | ⬜ |
 
 ---
 
@@ -170,6 +173,8 @@ A living document to track implementation progress across all phases.
 | D.7 | Observability Overview | ✅ |
 | D.8 | Traceability Basics Guide | ✅ |
 | D.9 | Citation Verification Strategies | ✅ |
+| D.10 | Workflow Overview | ✅ |
+| D.11 | Ingestion Workflow Guide | ✅ |
 
 ---
 
@@ -182,4 +187,4 @@ A living document to track implementation progress across all phases.
 | ⬜ | Not Started |
 
 ---
-*Last updated: 2026-01-19*
+*Last updated: 2026-01-20*

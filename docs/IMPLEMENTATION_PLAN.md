@@ -16,6 +16,7 @@ Build a production-aligned RAG system covering Ingestion and Retrieval phases.
 - [Phase 6: Serving / API](#phase-6-serving--api)
 - [Phase 7: Observability](#phase-7-observability)
 - [Phase 9: Error Handling & Resilience](#phase-9-error-handling--resilience)
+- [Phase 10: Durable Workflows](#phase-10-durable-workflows)
 
 ---
 
@@ -786,3 +787,52 @@ for r in results:
 ### - [x] Task 9.5: Timeouts
 - Explicit timeout configuration for LLM, embedding, and DB calls
 
+---
+
+## Phase 10: Durable Workflows
+
+### - [x] Task 10.1: Workflow Evaluation
+- **Decision:** DBOS selected for Postgres-native, lightweight workflow orchestration
+- **Use Case:** Ingestion pipeline with resume-from-failure capability
+
+### - [x] Task 10.2: Workflow Design
+**File:** Implementation plan in brain artifacts
+- Umbrella workflow for folder ingestion
+- Child workflows per file with queue-based concurrency
+- Step-level checkpointing for each operation
+
+### - [x] Task 10.3: Workflow Documentation
+**Files:** `docs/workflow/overview.md`, `docs/workflow/ingestion-workflow.md`
+- DBOS concepts (workflows, steps, queues)
+- Ingestion-specific implementation details
+
+### - [ ] Task 10.4: Workflow Implementation
+**File:** `src/ingestion/workflow.py`
+
+| Component | Type | Description |
+|-----------|------|-------------|
+| `ingest_folder_workflow` | Workflow | Umbrella workflow for folder ingestion |
+| `process_file_workflow` | Workflow | Per-file processing with checkpointing |
+| `discover_files_step` | Step | File discovery |
+| `load_and_normalize_step` | Step | Document loading and normalization |
+| `chunk_step` | Step | Document chunking |
+| `embed_step` | Step | Embedding with retry (3 attempts) |
+| `save_step` | Step | Database persistence |
+
+**Configuration:**
+- `worker_concurrency=3` for file queue
+- Same Postgres database as RAG data
+- `DBOS_SYSTEM_DATABASE_URL` environment variable
+
+### - [ ] Task 10.5: CLI Entry Point
+**File:** `scripts/run_ingestion_workflow.py`
+- DBOS initialization and launch
+- Workflow execution with unique run ID
+- SetWorkflowID for idempotency
+
+### - [ ] Task 10.6: Integration Testing
+- Resume-from-failure verification
+- Concurrent file processing
+- Checkpoint inspection via DBOS tables
+
+📖 **Detailed Guides:** [Workflow Overview](workflow/overview.md) | [Ingestion Workflow](workflow/ingestion-workflow.md)

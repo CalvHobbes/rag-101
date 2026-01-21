@@ -311,21 +311,28 @@ async def health():
 
 ---
 
-### 3.10 Durable Workflows (Deferred)
+### 3.10 Durable Workflows
 
-**When to Add:**
+**Purpose:** Provide resume-from-failure capability for long-running ingestion operations.
+
+**Current Implementation:**
+- **DBOS** (Postgres-native, simple) for ingestion workflows
+- Step-level checkpointing
+- Concurrent file processing via queues
+
+**When to Use:**
 - Ingestion runs exceed 10 minutes
 - Need step-level caching for debugging
 - Want to resume failed runs from checkpoint
 
-**Tools:**
-- **DBOS** (Postgres-native, simple)
-- **Prefect** (mature, more features)
+**Key Components:**
+- `@DBOS.workflow()` - Umbrella and per-file workflows
+- `@DBOS.step()` - Checkpointed operations
+- `Queue` - Concurrent execution with flow control
 
-**For Initial Learning:**
-- Skip workflow orchestration
-- Use simple scripts with error handling
-- Add orchestration when pain is felt
+📖 **Detailed Guides:**
+- [Workflow Overview](workflow/overview.md)
+- [Ingestion Workflow](workflow/ingestion-workflow.md)
 
 ---
 
