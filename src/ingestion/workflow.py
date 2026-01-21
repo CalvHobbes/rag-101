@@ -16,7 +16,10 @@ from src.ingestion.embedder import get_embedder, embed_documents
 from src.ingestion.storage import save_documents, check_document_exists
 from src.schemas.files import FileInfo
 from src.schemas.chunks import ChunkCreate
-# --- DBOS Configuration ---
+from dbos import DBOS, SetWorkflowID
+
+from src.ingestion.document_loader import load_document, Document
+
 config: DBOSConfig = {
     "name": "rag-101",
     "system_database_url": os.environ.get("DBOS_SYSTEM_DATABASE_URL"),
