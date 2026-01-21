@@ -846,4 +846,45 @@ for r in results:
 - Concurrent file processing
 - Checkpoint inspection via DBOS tables
 
+### - [ ] Task 10.7: REST API Workflow Trigger
+**Goal:** Expose DBOS ingestion workflow via FastAPI endpoint for programmatic triggering.
+
+**Files:**
+- `src/api/routers/ingest.py` - New router for ingestion endpoints
+- `src/api/main.py` - Register router + DBOS lifespan integration
+
+**Endpoints:**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/ingest` | Start async ingestion workflow for a folder |
+| GET | `/ingest/{workflow_id}/status` | Poll workflow status and progress |
+
+**Design Decisions:**
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| **Async execution** | Return immediately with workflow ID | Ingestion can take minutes; avoid HTTP timeouts |
+| **DBOS lifespan** | Initialize in FastAPI `lifespan` | DBOS stays alive with server, enables resume |
+| **Status polling** | Separate endpoint | Simple, stateless; webhooks can be added later |
+
+**Request/Response Schemas:**
+```python
+class IngestRequest(BaseModel):
+    folder_path: str  # Path to folder to ingest
+
+class IngestResponse(BaseModel):
+    workflow_id: str
+    status: str  # "started", "running", "complete", "failed"
+    message: str
+
+class WorkflowStatusResponse(BaseModel):
+    workflow_id: str
+    status: str
+    files_found: int | None
+    files_processed: int | None
+    files_skipped: int | None
+    result: dict | None
+```
+
 📖 **Detailed Guides:** [Workflow Overview](workflow/overview.md) | [Ingestion Workflow](workflow/ingestion-workflow.md)

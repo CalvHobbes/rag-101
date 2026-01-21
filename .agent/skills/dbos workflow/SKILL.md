@@ -1,6 +1,6 @@
 ---
 name: dbos workflow
-description: Guidance for using DBOS to build workflows
+description: Guidance for using DBOS to build workflows. Use this to look up DBOS documentation and examples.
 ---
 
 # Build Reliable Applications With DBOS

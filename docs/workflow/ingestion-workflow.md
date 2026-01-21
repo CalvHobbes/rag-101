@@ -38,6 +38,7 @@ ingest_folder_workflow(folder_path, run_id)     ← Umbrella workflow
 
 ### Entry Point
 
+**CLI (Manual/Batch):**
 ```bash
 # CLI usage
 uv run python scripts/run_ingestion_workflow.py <folder_path>
@@ -45,6 +46,23 @@ uv run python scripts/run_ingestion_workflow.py <folder_path>
 # Or via Makefile
 make ingest-workflow FOLDER=./data/documents
 ```
+
+**REST API (Programmatic):**
+```bash
+# Start ingestion (returns immediately with workflow ID)
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"folder_path": "./data/documents"}'
+
+# Response: {"workflow_id": "ingestion-abc123", "status": "started", ...}
+
+# Poll status
+curl http://localhost:8000/ingest/ingestion-abc123/status
+```
+
+> [!NOTE]
+> The REST API returns immediately with a workflow ID. Use the status endpoint to poll for completion.
+> DBOS is initialized in FastAPI's lifespan, so workflows persist across requests and survive server restarts.
 
 ### Workflow Module
 

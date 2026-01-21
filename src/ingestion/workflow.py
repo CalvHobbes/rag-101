@@ -4,7 +4,7 @@ This module wraps existing ingestion functions in DBOS steps and workflows,
 enabling durable execution with resume-from-failure capabilities.
 """
 import os
-from dbos import DBOS, DBOSConfig, Queue
+from dbos import DBOS, DBOSConfig, Queue, SetWorkflowID
 from pathlib import Path
 from typing import List
 # Reuse existing functions
@@ -165,11 +165,11 @@ async def ingest_folder_workflow(folder_path_str: str, run_id: str) -> dict:
         # This allows DBOS to skip processing if this specific file version was already processed successfully
         child_id = f"process-{file_dict['file_hash']}"
         
-        handle = await file_queue.enqueue_async(
-            process_file_workflow, 
-            file_dict, 
-            workflow_id=child_id
-        )
+        with SetWorkflowID(child_id):
+            handle = await file_queue.enqueue_async(
+                process_file_workflow, 
+                file_dict
+            )
         handles.append(handle)
     
     # Summarize

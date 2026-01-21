@@ -157,6 +157,7 @@ A living document to track implementation progress across all phases.
 | 10.4 | Implement `src/ingestion/workflow.py` | 🔄 |
 | 10.5 | Implement `scripts/run_ingestion_workflow.py` | ⬜ |
 | 10.6 | Integration Testing (Resume, Concurrency) | ⬜ |
+| 10.7 | REST API Workflow Trigger (`/ingest` endpoint) | ⬜ |
 
 ---
 
@@ -187,4 +188,4 @@ A living document to track implementation progress across all phases.
 | ⬜ | Not Started |
 
 ---
-*Last updated: 2026-01-20*
+*Last updated: 2026-01-21*

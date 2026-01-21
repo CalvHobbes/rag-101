@@ -320,6 +320,10 @@ async def health():
 - Step-level checkpointing
 - Concurrent file processing via queues
 
+**Trigger Methods:**
+- **CLI:** `scripts/run_ingestion_workflow.py` for manual/batch runs
+- **REST API:** `/ingest` endpoint for programmatic triggering (async, returns workflow ID)
+
 **When to Use:**
 - Ingestion runs exceed 10 minutes
 - Need step-level caching for debugging
@@ -329,6 +333,7 @@ async def health():
 - `@DBOS.workflow()` - Umbrella and per-file workflows
 - `@DBOS.step()` - Checkpointed operations
 - `Queue` - Concurrent execution with flow control
+- FastAPI lifespan integration - DBOS stays alive with server
 
 📖 **Detailed Guides:**
 - [Workflow Overview](workflow/overview.md)

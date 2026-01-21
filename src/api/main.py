@@ -3,7 +3,7 @@ FastAPI application for the RAG system.
 """
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from src.api.routers import query
+from src.api.routers import query_router, ingest_router
 
 from src.logging_config import get_logger
 
@@ -17,11 +17,18 @@ from src.api.exception_handlers import (
 
 log = get_logger(__name__)
 
+def _init_workflow_():
+     # Initialize DBOS (connects to system database)
+    from dbos import DBOS
+    DBOS.launch()
+    log.info("dbos_initialized")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown events."""
     log.info("api_startup")
+    _init_workflow_()
     from src.warmup import warmup_models
     warmup_models()
     yield
@@ -35,7 +42,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(query.router)        
+app.include_router(query_router)
+app.include_router(ingest_router)   
 
 # Exception handlers
 app.add_exception_handler(LLMError, llm_error_handler)
