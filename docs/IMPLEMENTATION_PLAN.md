@@ -796,8 +796,19 @@ for r in results:
 - **Use Case:** Ingestion pipeline with resume-from-failure capability
 
 ### - [x] Task 10.2: Workflow Design
-**File:** Implementation plan in brain artifacts
-- Umbrella workflow for folder ingestion
+- **Key Decision:** Robust Resumption Strategy using deterministic workflow IDs + Safety Checks.
+- Umbrella workflow (`ingest_folder_workflow`) orchestrates parallel processing.
+- Child workflow (`process_file_workflow`) handles single file with checkpoints.
+
+### - [x] Task 10.3: Implementation
+**File:** `src/ingestion/workflow.py`
+- Implements durable steps for `load`, `chunk`, `embed`, `save`.
+- **Safety Check:** `save_step` verifies file hash on disk to prevent stale overwrites.
+- **Resumption:** Uses `process-{file_hash}` as workflow ID for 0-cost resumption of unchanged files.
+
+### - [x] Task 10.4: Monitoring
+- Self-hosted DBOS Conductor via Docker Compose (`port 9080`).
+- Structured logging + DBOS events.
 - Child workflows per file with queue-based concurrency
 - Step-level checkpointing for each operation
 

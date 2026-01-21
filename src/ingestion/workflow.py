@@ -8,7 +8,7 @@ from dbos import DBOS, DBOSConfig, Queue
 from pathlib import Path
 from typing import List
 # Reuse existing functions
-from src.ingestion.file_discovery import discover_files
+from src.ingestion.file_discovery import discover_files, get_file_hash
 from src.ingestion.document_loader import load_document
 from src.ingestion.text_normalizer import normalize_text
 from src.ingestion.chunker import chunk_documents
@@ -69,6 +69,18 @@ async def embed_step(texts: List[str]) -> List[List[float]]:
 async def save_step(file_info_dict: dict, chunk_creates: List[dict]) -> None:
     """Save documents to database."""
     file_info = FileInfo(**file_info_dict)
+    
+    # SAFETY CHECK: Verify file on disk still matches the hash we processed
+    # This prevents stale workflows (e.g. manual retries of old failures) from overwriting 
+    # newer data if the file content has changed since the workflow started.
+    
+    if file_info.file_path.exists():
+        current_hash = get_file_hash(file_info.file_path)
+        if current_hash != file_info.file_hash:
+            # File has changed! Abort save.
+            DBOS.logger.warning(f"Aborting save for {file_info.file_path.name}: File changed on disk (Hash mismatch: {file_info.file_hash} vs {current_hash})")
+            return
+
     from src.schemas.chunks import ChunkCreate
     chunks = [ChunkCreate(**c) for c in chunk_creates]
     await save_documents(file_info, chunks)
@@ -149,7 +161,15 @@ async def ingest_folder_workflow(folder_path_str: str, run_id: str) -> dict:
     # Step 2: Enqueue all files for concurrent processing (async for coroutine workflows)
     handles = []
     for file_dict in file_dicts:
-        handle = await file_queue.enqueue_async(process_file_workflow, file_dict)
+        # Use file hash as deterministic workflow ID
+        # This allows DBOS to skip processing if this specific file version was already processed successfully
+        child_id = f"process-{file_dict['file_hash']}"
+        
+        handle = await file_queue.enqueue_async(
+            process_file_workflow, 
+            file_dict, 
+            workflow_id=child_id
+        )
         handles.append(handle)
     
     # Summarize

@@ -98,38 +98,20 @@ Access the console at: **http://localhost:9080**
 
 ---
 
-## Advanced: Robust Resumption Strategy
+## Resumption Strategy
 
-The current implementation uses **Unique Run IDs** (simplified approach). This causes failed/incomplete workflows to be abandoned and restarted fresh on the next run. This is safe but can be inefficient if expensive steps (embedding) were partially completed.
-
-To enable **cost-efficient resumption** without risking data corruption, use the following hybrid strategy:
+The workflow implements a **Robust Resumption Strategy** to ensure cost-efficiency and data integrity.
 
 ### 1. Deterministic Child Workflow IDs
-Use the file hash to generate the workflow ID for child workflows:
-```python
-# In ingest_folder_workflow
-child_id = f"process-{file_dict['file_hash']}"
-await file_queue.enqueue_async(..., workflow_id=child_id)
-```
-- **Unchanged Files:** DBOS returns cached result instantly (0 cost).
-- **Failed Files:** DBOS retries the specific failure.
-- **Changed Files:** New hash = New workflow (Runs fresh).
+Child workflows (`process_file_workflow`) use the **file hash** as their workflow ID (e.g., `process-<md5hash>`).
+- **Unchanged Files:** If a file hasn't changed, DBOS detects the existing successful workflow ID and returns the cached result immediately (0 cost).
+- **Failed Files:** If a specific file failed previously, DBOS retries only that file.
+- **Changed Files:** If a file is modified, its hash changes, triggering a new workflow execution.
 
-### 2. Safety Check (Required)
-To prevent "zombie" workflows (manual retries of old IDs) from overwriting newer data, you MUST add a check in `save_step`:
-```python
-# In save_step
-current_hash = get_file_hash(file_path)
-if current_hash != processed_hash:
-    logger.warning("File changed on disk! Aborting save.")
-    return
-```
-
-### 3. Comparison
-| Strategy | Pros | Cons |
-|----------|------|------|
-| **Unique IDs (Current)** | Simple, Safe | Re-runs expensive steps after crash |
-| **file_hash IDs (Proposed)** | Saves $$ on resume | Requires strict safety checks |
+### 2. Safety Check (Data Integrity)
+To prevent "zombie" workflows (e.g., manual retries of old failures) from overwriting newer data, `save_step` includes a mandatory check:
+- It verifies that the file on disk **still matches the hash** being processed.
+- If the file has changed on disk during processing, the save is aborted to prevent inconsistent state.
 
 ---
 

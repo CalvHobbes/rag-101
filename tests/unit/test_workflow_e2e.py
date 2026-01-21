@@ -89,27 +89,34 @@ class TestProcessFileWorkflow:
              patch("src.ingestion.workflow.chunk_documents") as mock_chunk, \
              patch("src.ingestion.workflow.get_embedder") as mock_get_embedder, \
              patch("src.ingestion.workflow.embed_documents", new_callable=AsyncMock) as mock_embed, \
-             patch("src.ingestion.workflow.save_documents", new_callable=AsyncMock) as mock_save:
+             patch("src.ingestion.workflow.save_documents", new_callable=AsyncMock) as mock_save, \
+             patch("src.ingestion.workflow.get_file_hash") as mock_get_hash:
 
             # Setup mocks
             mock_check.return_value = False  # New file
             
-            mock_doc = Mock()
-            mock_doc.page_content = "test content"
-            mock_doc.metadata = {"source": "/test/new.pdf", "page": 0}
-            mock_load.return_value = [mock_doc]
+            # Mocks for save_step safety check
+            mock_get_hash.return_value = "new_file_hash" # Matches file_info hash
+            # We need to mock file_path.exists() but file_path is a property created inside workflow
+            # So we patch Path.exists
+            with patch("pathlib.Path.exists", return_value=True):
             
-            mock_normalize.return_value = "normalized test content"
-            
-            mock_chunk.return_value = [
-                Document(page_content="chunk 1", metadata={"source": "/test/new.pdf"}),
-                Document(page_content="chunk 2", metadata={"source": "/test/new.pdf"}),
-            ]
-            
-            mock_embed.return_value = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
-
-            # Execute workflow
-            result = await process_file_workflow(file_info_dict)
+                mock_doc = Mock()
+                mock_doc.page_content = "test content"
+                mock_doc.metadata = {"source": "/test/new.pdf", "page": 0}
+                mock_load.return_value = [mock_doc]
+                
+                mock_normalize.return_value = "normalized test content"
+                
+                mock_chunk.return_value = [
+                    Document(page_content="chunk 1", metadata={"source": "/test/new.pdf"}),
+                    Document(page_content="chunk 2", metadata={"source": "/test/new.pdf"}),
+                ]
+                
+                mock_embed.return_value = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    
+                # Execute workflow
+                result = await process_file_workflow(file_info_dict)
 
             # Verify result
             assert result["status"] == "success"
@@ -123,6 +130,57 @@ class TestProcessFileWorkflow:
             mock_chunk.assert_called_once()
             mock_embed.assert_called_once()
             mock_save.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_fails_safe_on_hash_mismatch(self, reset_dbos):
+        """
+        Verify safety check: save_step should ABORT if file on disk has changed.
+        This tests the scenario where a user retries an old failed workflow
+        but the file content has changed in the meantime.
+        """
+        from src.ingestion.workflow import process_file_workflow
+        from langchain_core.documents import Document
+
+        file_info_dict = {
+            "file_path": "/test/stale_file.pdf",
+            "file_hash": "OLD_HASH",  # The hash this specific workflow run is processing
+            "file_extension": ".pdf",
+            "file_size": 1024
+        }
+
+        # Mock underlying functions
+        with patch("src.ingestion.workflow.check_document_exists", new_callable=AsyncMock) as mock_check, \
+             patch("src.ingestion.workflow.load_document") as mock_load, \
+             patch("src.ingestion.workflow.normalize_text") as mock_normalize, \
+             patch("src.ingestion.workflow.chunk_documents") as mock_chunk, \
+             patch("src.ingestion.workflow.get_embedder") as mock_get_embedder, \
+             patch("src.ingestion.workflow.embed_documents", new_callable=AsyncMock) as mock_embed, \
+             patch("src.ingestion.workflow.save_documents", new_callable=AsyncMock) as mock_save, \
+             patch("src.ingestion.workflow.get_file_hash") as mock_get_hash:
+
+            mock_check.return_value = False
+            
+            # CRITICAL: Mock get_file_hash to return a DIFFERENT hash than what's in file_info
+            # This simulates the file changing on disk
+            mock_get_hash.return_value = "NEW_HASH_ON_DISK"
+            
+            with patch("pathlib.Path.exists", return_value=True):
+                mock_load.return_value = [Mock(page_content="text", metadata={})]
+                mock_normalize.return_value = "text"
+                mock_chunk.return_value = [Document(page_content="chunk", metadata={})]
+                mock_embed.return_value = [[0.1]]
+
+                # Execute workflow
+                result = await process_file_workflow(file_info_dict)
+
+                # Verify workflow succeeded (it doesn't crash)
+                assert result["status"] == "success"
+                
+                # BUT verify save_documents was NEVER called
+                mock_save.assert_not_called()
+                
+                # And verify get_file_hash WAS called (the check happened)
+                mock_get_hash.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_skips_file_with_no_content(self, reset_dbos):
@@ -200,6 +258,15 @@ class TestIngestFolderWorkflow:
 
             # Verify files were enqueued using async method
             assert mock_queue.enqueue_async.call_count == 2
+            
+            # Verify deterministic workflow IDs were used
+            # Call 1
+            call_args1 = mock_queue.enqueue_async.call_args_list[0]
+            assert call_args1[1]['workflow_id'] == "process-hash1"
+            
+            # Call 2
+            call_args2 = mock_queue.enqueue_async.call_args_list[1]
+            assert call_args2[1]['workflow_id'] == "process-hash2"
             assert result["files_found"] == 2
             assert result["files_processed"] == 2
 
