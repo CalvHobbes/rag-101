@@ -259,14 +259,16 @@ class TestIngestFolderWorkflow:
             # Verify files were enqueued using async method
             assert mock_queue.enqueue_async.call_count == 2
             
-            # Verify deterministic workflow IDs were used
-            # Call 1
+            # Verify the workflow function and file dicts were passed
+            # Note: workflow_id is set via SetWorkflowID context manager, not as a kwarg
             call_args1 = mock_queue.enqueue_async.call_args_list[0]
-            assert call_args1[1]['workflow_id'] == "process-hash1"
+            assert call_args1[0][0].__name__ == "process_file_workflow"
+            assert call_args1[0][1]["file_hash"] == "hash1"
             
-            # Call 2
             call_args2 = mock_queue.enqueue_async.call_args_list[1]
-            assert call_args2[1]['workflow_id'] == "process-hash2"
+            assert call_args2[0][0].__name__ == "process_file_workflow"
+            assert call_args2[0][1]["file_hash"] == "hash2"
+            
             assert result["files_found"] == 2
             assert result["files_processed"] == 2
 

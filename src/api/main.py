@@ -18,7 +18,10 @@ from src.api.exception_handlers import (
 log = get_logger(__name__)
 
 def _init_workflow_():
-     # Initialize DBOS (connects to system database)
+     # Initialize observability (Opik)
+    from src.observability import configure_observability
+    configure_observability()
+    # Initialize DBOS (connects to system database)
     from dbos import DBOS
     DBOS.launch()
     log.info("dbos_initialized")

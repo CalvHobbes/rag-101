@@ -20,18 +20,25 @@ load_dotenv()
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-from dbos import DBOS, SetWorkflowID
-from src.ingestion.workflow import ingest_folder_workflow
-from src.logging_config import configure_logging, get_logger
 from src.config import get_settings
+from src.logging_config import configure_logging, get_logger
+from src.observability import configure_observability
 
-# Initialize logging
+settings = get_settings()
+
+# Initialize logging immediately
 configure_logging(
     log_level=get_settings().log_level,
     json_format=get_settings().json_logs,
     log_file="ingestion_workflow.log"
 )
 log = get_logger(__name__)
+
+# Configure observability (Opik)
+configure_observability()
+
+from dbos import DBOS, SetWorkflowID
+from src.ingestion.workflow import ingest_folder_workflow
 
 
 async def main():

@@ -15,6 +15,7 @@ tenacity
 structlog
 pytest
 pytest-asyncio
+pytest-env
 greenlet # often needed for sqlalchemy async
 
 fastapi

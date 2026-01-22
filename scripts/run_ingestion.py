@@ -90,7 +90,7 @@ async def process_file(file_info: FileInfo, embedder):
 
 
     
-@track(name="ingestion_run", phase=Phase.INGESTION)
+@track(name="ingestion_run", phase=Phase.INGESTION, tags=["execution:manual"])
 async def ingest_folder(folder_path: Path, run_id: str):
     """Core ingestion logic wrapped in observability."""
     set_trace_metadata({"ingestion_run_id": run_id})

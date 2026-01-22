@@ -2,7 +2,7 @@ import pytest
 import os
 from unittest.mock import patch, MagicMock
 from src.ingestion.embedder import get_embedder
-from src.config import Settings, EmbeddingSettings
+from src.config import Settings, EmbeddingSettings, EmbeddingProvider
 
 def test_get_embedder_huggingface():
     # Helper to clear lru_cache for testing
@@ -23,7 +23,7 @@ def test_get_embedder_openai(mock_settings):
     get_embedder.cache_clear()
     
     # Mock settings to return openai provider
-    mock_settings.return_value.embedding.provider = "openai"
+    mock_settings.return_value.embedding.provider = EmbeddingProvider.OPENAI
     mock_settings.return_value.embedding.api_key = "sk-fake-key"
     mock_settings.return_value.embedding.model = "text-embedding-3-small"
 

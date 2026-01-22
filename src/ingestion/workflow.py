@@ -7,6 +7,10 @@ import os
 from dbos import DBOS, DBOSConfig, Queue, SetWorkflowID
 from pathlib import Path
 from typing import List
+# Settings
+from src.config import get_settings
+# Observability
+from src.observability import track, Phase
 # Reuse existing functions
 from src.ingestion.file_discovery import discover_files, get_file_hash
 from src.ingestion.document_loader import load_document
@@ -20,11 +24,13 @@ from dbos import DBOS, SetWorkflowID
 
 from src.ingestion.document_loader import load_document, Document
 
+settings = get_settings()
+
 config: DBOSConfig = {
     "name": "rag-101",
-    "system_database_url": os.environ.get("DBOS_SYSTEM_DATABASE_URL"),
-    "conductor_key": os.environ.get("DBOS_CONDUCTOR_KEY"),
-    "conductor_url": os.environ.get("DBOS_CONDUCTOR_URL"),  # For self-hosted Conductor
+    "system_database_url": settings.dbos.system_database_url,
+    "conductor_key": settings.dbos.conductor_key,
+    "conductor_url": settings.dbos.conductor_url,
 }
 DBOS(config=config)
 # Queue for concurrent file processing
@@ -32,6 +38,7 @@ file_queue = Queue("file_processing_queue", worker_concurrency=3)
 
 # --- Steps (wrap existing functions) ---
 @DBOS.step()
+@track(name="discover_files_step")
 def discover_files_step(folder_path: Path) -> List[dict]:
     """Discover files in folder. Returns serializable dicts."""
     files = discover_files(folder_path)
@@ -39,12 +46,14 @@ def discover_files_step(folder_path: Path) -> List[dict]:
     return [file.model_dump() for file in files]
 
 @DBOS.step()
+@track(name="check_exists_step")
 async def check_exists_step(file_info_dict: dict) -> bool:
     """Check if document already processed."""
     file_info = FileInfo(**file_info_dict)
     return await check_document_exists(file_info)
 
 @DBOS.step()
+@track(name="load_and_normalize_step")
 def load_and_normalize_step(file_info_dict: dict) -> List[dict]:
     """Load document and normalize text."""
     file_info = FileInfo(**file_info_dict)
@@ -55,6 +64,7 @@ def load_and_normalize_step(file_info_dict: dict) -> List[dict]:
     return [{"page_content": d.page_content, "metadata": d.metadata} for d in raw_docs]
 
 @DBOS.step()
+@track(name="chunk_step")
 def chunk_step(docs: List[dict]) -> List[dict]:
     """Chunk documents."""
     from langchain_core.documents import Document
@@ -63,12 +73,14 @@ def chunk_step(docs: List[dict]) -> List[dict]:
     return [{"page_content": c.page_content, "metadata": c.metadata} for c in chunks]
 
 @DBOS.step(retries_allowed=True, max_attempts=3, backoff_rate=2.0)
+@track(name="embed_step")
 async def embed_step(texts: List[str]) -> List[List[float]]:
     """Embed texts with retry for transient API failures."""
     embedder = get_embedder()
     return await embed_documents(embedder, texts)
 
 @DBOS.step()
+@track(name="save_step")
 async def save_step(file_info_dict: dict, chunk_creates: List[dict]) -> None:
     """Save documents to database."""
     file_info = FileInfo(**file_info_dict)
@@ -90,6 +102,7 @@ async def save_step(file_info_dict: dict, chunk_creates: List[dict]) -> None:
 
 # --- Workflows ---
 @DBOS.workflow()
+@track(name="process_file_workflow")
 async def process_file_workflow(file_info_dict: dict) -> dict:
     """
     Durable workflow for processing a single file.
@@ -143,6 +156,7 @@ async def process_file_workflow(file_info_dict: dict) -> dict:
     return {"status": "success", "file": file_name, "chunks": len(chunk_creates)}
 
 @DBOS.workflow()
+@track(name="ingest_folder_workflow", phase=Phase.INGESTION, tags=["execution:workflow"])
 async def ingest_folder_workflow(folder_path_str: str, run_id: str) -> dict:
     """
     Umbrella workflow for ingesting a folder.

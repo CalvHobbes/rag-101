@@ -105,6 +105,21 @@ class OpikSettings(BaseSettings):
     project_name: str = "rag-101"
 
 
+class DBOSSettings(BaseSettings):
+    """DBOS configuration."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="DBOS_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    system_database_url: str = ""
+    conductor_key: str = ""
+    conductor_url: str = ""
+
+
 class Settings(BaseSettings):
     """Main application settings."""
 
@@ -126,6 +141,7 @@ class Settings(BaseSettings):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     opik: OpikSettings = Field(default_factory=OpikSettings)
     timeout: TimeoutSettings = Field(default_factory=TimeoutSettings)
+    dbos: DBOSSettings = Field(default_factory=DBOSSettings)
 
 
 @lru_cache

@@ -49,9 +49,6 @@ def set_evaluation_source(source: str) -> None:
     """
     _source_context.set(source)
     # Also update the current span immediately so the entry point gets tagged
-    # Note: Opik's update_current_trace applies to the trace, update_current_span to the span
-    # We ideally want it on the trace (root) level? Let's do both or just trace.
-    # update_current_trace adds tags to the trace.
     try:
         opik.opik_context.update_current_trace(tags=[f"source:{source}"])
     except Exception:
@@ -68,8 +65,8 @@ def track(name: Optional[str] = None, phase: Optional[Phase] = None, tags: Optio
         tags: Additional list of string tags.
     """
     def decorator(func):
-        # 1. Resolve static tags
-        static_tags = tags or []
+        # 1. Resolve static tags (copy to avoid mutating original)
+        static_tags = tags.copy() if tags else []
         if phase:
             static_tags.append(f"phase:{phase.value}")
         

@@ -2,6 +2,22 @@
 
 This document provides detailed implementation guidance for observability, monitoring, and cost tracking in production RAG systems.
 
+## Table of Contents
+
+- [1. Purpose of Observability](#1-purpose-of-observability)
+- [2. Observability Tasks & Implementation Choices](#2-observability-tasks--implementation-choices)
+  - [Task 0: Abstraction Layer](#task-0-abstraction-layer)
+  - [Task 1: Structured Logging](#task-1-structured-logging)
+  - [Task 2: LLMOps / Tracing](#task-2-llmops--tracing)
+  - [Task 3: Metrics Collection](#task-3-metrics-collection)
+  - [Task 4: Cost Tracking](#task-4-cost-tracking)
+- [3. Observability Guarantees](#3-observability-guarantees)
+- [4. RAG Phase Rules](#4-rag-phase-rules)
+  - [The Only Phases You Should Use](#the-only-phases-you-should-use)
+  - [Phase Ownership Rules](#phase-ownership-rules-critical)
+  - [Helper Function Rule](#helper-function-rule)
+  - [Execution Mode Tags](#execution-mode-tags-best-practice)
+
 ---
 
 ## 1. Purpose of Observability
@@ -298,12 +314,34 @@ That information belongs in **metadata**, not phases.
 
 ---
 
+### Execution Mode Tags (Best Practice)
+
+When the same phase can be triggered via different execution paths, use **tags** to distinguish:
+
+```python
+# Workflow execution (DBOS durable workflows)
+@track(name="ingest_folder_workflow", phase=Phase.INGESTION, tags=["execution:workflow"])
+
+# Manual/script execution
+@track(name="ingest_folder", phase=Phase.INGESTION, tags=["execution:manual"])
+```
+
+**Filtering in Opik:**
+- `phase:ingestion` → all ingestion
+- `phase:ingestion AND execution:workflow` → workflow runs only
+- `phase:ingestion AND execution:manual` → script runs only
+
+This keeps phases stable and coarse while allowing fine-grained filtering.
+
+---
+
 ### Summary
 
 - Phases are **few, coarse, and stable**
 - One `QUERY` per request
 - `GENERATION` only for the LLM
 - Helpers get no phase
+- Use **tags** for execution modes, not phases
 - Simplicity now prevents pain later
 
 This phase model scales cleanly from learning projects to production systems.
