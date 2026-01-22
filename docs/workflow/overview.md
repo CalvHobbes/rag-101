@@ -2,6 +2,16 @@
 
 This section covers **durable workflow orchestration** for the RAG system using DBOS.
 
+## Table of Contents
+
+- [Overview](#overview)
+- [When to Use Workflows](#when-to-use-workflows)
+- [Architecture](#architecture)
+- [Key Concepts](#key-concepts)
+- [Implementation](#implementation)
+- [References](#references)
+- [Technical Findings](#technical-findings)
+
 ---
 
 ## Overview
@@ -114,3 +124,31 @@ See [ingestion-workflow.md](ingestion-workflow.md) for the specific implementati
 - [DBOS Programming Guide](https://docs.dbos.dev/python/programming-guide)
 - [DBOS Architecture](https://docs.dbos.dev/architecture)
 - [DBOS Queues](https://docs.dbos.dev/python/tutorials/queue-tutorial)
+
+---
+
+## Technical Findings
+
+Key learnings and constraints discovered during implementation:
+
+### 1. Method Signatures & Context
+- **Context Handling**: Every workflow, step, and transaction must accept the context object as its first argument.
+    - `workflow(ctx: WorkflowContext, ...)`
+    - `step(ctx: StepContext, ...)`
+- **Decorators**: The decorators `@DBOS.workflow()` and `@DBOS.step()` are required to register functions with the DBOS runtime. If the ingestion flow has been broken down into clear steps, then it's just a matter of adding these decorators to the existing functions.
+
+### 2. Serialization Requirements
+- **JSON Compatibility**: All input arguments and return values for steps and workflows must be JSON-serializable.
+- **Pydantic Models**: Complex objects should be converted to Pydantic models (or dictionaries) at the workflow boundary. Passing raw arbitrary Python objects (like open file handles or complex class instances) will fail.
+
+### 3. Error Handling & Resumption
+- **Cancellation Propagation**: If a child workflow is cancelled, that cancellation bubbles up to the parent workflow as an error.
+- **Resumption Limitations**: The `DBOS.resume_workflow` capability is strictly limited.
+    - **Can Resume**: Workflows in `CANCELLED` or `TIMEOUT` status.
+    - **Cannot Resume**: Workflows in `ERROR` status (i.e., threw an exception). These must be handled by retrying (via `fork_workflow`) or fixing the underlying issue and restarting.
+
+### 4. Observability Integration (Opik)
+- **Tracing Isolation**: Combining DBOS's internal OTel traces with an external tracing system (like Opik) is complex due to trace ID conflicts ("Split Brain" issue where DBOS generates different internal and external trace IDs). See [Hybrid Tracing Analysis](../observability/hybrid_tracing.md) for details.
+- **Best Practice**: 
+    - Use **Opik SDK** (`@track`) separately for application-level tracing, including the workflow execution.
+    - Do not attempt to merge the two trace trees.
